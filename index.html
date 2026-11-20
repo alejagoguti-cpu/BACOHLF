@@ -31,83 +31,54 @@
   <section id="escenario">
     <div class="hud">
       <div class="escena hero" data-e="1">
-        <h1 class="titulo"><span class="w">Torre</span> <span class="w">Suites</span></h1>
+        <p class="hero-k">BACO Studio · Estelar La Fontana · Torre Suites</p>
+        <h1 class="titulo"><span class="w">Construir</span> <span class="w">antes de</span> <span class="w">construir.</span></h1>
         <div class="hero-der">
-          <p>La remodelación de la torre, piso a piso, sobre el modelo BIM real del hotel. Desplázate para recorrerla.</p>
-          <button class="pill" data-ir="3">Explorar el proyecto <span>↗</span></button>
+          <p>La Torre Suites se levanta dos veces: primero en el modelo, después en la obra. Desliza y recorre sus 12 meses.</p>
+          <button class="pill" data-ir="2">Empezar <span>↓</span></button>
         </div>
       </div>
 
       <div class="escena tarjeta" data-e="2">
-        <p class="kicker">02</p>
-        <h2>Un solo modelo, <em>todo el edificio</em></h2>
-        <div class="cifras">
-          <div><small>Niveles</small><b data-cnt="niveles">0</b></div>
-          <div><small>Altura</small><b><span data-cnt="altura">0</span> m</b></div>
-          <div><small>Elementos</small><b data-cnt="cats">0</b><small>categorías BIM</small></div>
-        </div>
-        <p>Haz clic sobre la torre para abrirla en 3D.</p>
+        <p class="kicker">Etapa A · mes 0 a 1</p>
+        <h2>Del escaneo <em>a un modelo con reglas</em></h2>
+        <p>La nube del levantamiento LOD 300 se vuelve un modelo coordinable. Antes de contratar se fijan las reglas del juego.</p>
+        <div class="chips"><span class="chip">BEP</span><span class="chip">EIR / AIR</span><span class="chip">CDE</span><span class="chip">Matriz LOD 400</span></div>
       </div>
 
       <div class="escena tarjeta" data-e="3">
-        <p class="kicker">03</p>
-        <h2>Nivel por <em>nivel</em></h2>
-        <p>Cada piso es un grupo independiente del modelo. Pasa el cursor para resaltarlo y elige uno para entrar.</p>
-        <div class="chips" id="chipsNiveles"></div>
+        <p class="kicker">Etapa B · mes 1 a 3</p>
+        <h2>Cada tubo, <em>antes de instalarlo</em></h2>
+        <p>Así se trazan las redes reales del Piso 2. Enciende o apaga cada sistema:</p>
+        <div class="chips" id="chipsDisc"></div>
+        <p class="critico" id="txtCritico"></p>
       </div>
 
       <div class="escena tarjeta" data-e="4">
-        <p class="kicker">04</p>
-        <h2>Entrar al <em>Piso 2</em></h2>
-        <p>Las plantas superiores se retiran. Ajusta la altura del corte para ver muros, vanos y puertas.</p>
-        <label class="rango"><span>Altura de corte</span><input type="range" id="rCorte" min="0.6" max="2.8" step="0.05" value="1.6" /><b id="vCorte">1,60 m</b></label>
+        <p class="kicker">Etapa C · mes 3 a 11</p>
+        <h2>La obra sigue <em>al modelo</em></h2>
+        <p>Cada piso pasa del modelo técnico a la obra terminada. Elige uno para entrar:</p>
+        <div class="chips" id="chipsNiveles"></div>
       </div>
 
       <div class="escena tarjeta" data-e="5">
-        <p class="kicker">05</p>
-        <h2>Del material <em>al dato</em></h2>
-        <p>Los cerramientos se vuelven transparentes y queda la estructura de información. Activa o apaga cada disciplina.</p>
-        <div class="chips" id="chipsDisc"></div>
-      </div>
-
-      <div class="escena tarjeta" data-e="6">
-        <p class="kicker">06</p>
-        <h2>Del edificio <em>al plano</em></h2>
-        <p>Vista superior del corte, generada desde la geometría del modelo. Cambia de planta:</p>
-        <div class="chips" id="chipsPlano"></div>
-      </div>
-
-      <div class="escena tarjeta" data-e="7">
-        <p class="kicker">07</p>
-        <h2>Existente vs. <em>remodelación</em></h2>
-        <p id="notaRemodel"></p>
-      </div>
-
-      <div class="escena tarjeta ancha" data-e="8">
-        <p class="kicker">08</p>
-        <h2>Ruta de <em>implementación</em></h2>
-        <div class="etapas" id="etapas"></div>
-        <div class="etapa-det" id="etapaDet"></div>
-      </div>
-
-      <div class="escena tarjeta ancha" data-e="9">
-        <p class="kicker">09</p>
-        <h2>Simula la <em>inversión</em></h2>
-        <div class="sim">
-          <div class="sim-ctrl">
-            <div class="seg" id="segModo"><button data-m="ind" class="on">Independiente</button><button data-m="int">BIM + construcción</button></div>
-            <label class="rango"><span>Duración de la obra</span><input type="range" id="rMeses" min="6" max="9" step="1" value="8" /><b id="vMeses">8 meses</b></label>
-            <label class="rango"><span>Presupuesto de obra</span><input type="range" id="rObra" min="5000" max="60000" step="500" value="25000" /><b id="vObra">$25.000 M</b></label>
-          </div>
-          <div class="sim-res">
-            <div><small>Honorarios sin IVA</small><b id="oTotal">—</b></div>
-            <div><small>Con IVA (19 %)</small><b id="oIva">—</b></div>
-            <div><small>Punto de equilibrio</small><b id="oEq">—</b><small>del presupuesto de obra</small></div>
-          </div>
-        </div>
-        <p class="fuente">Fórmula de la propuesta v03: etapas A, B y D fijas $111 M + $23 M por mes de obra (o $13,8 M con equipo de construcción BACO). Punto de equilibrio = honorario / presupuesto. No es una proyección de ahorro.</p>
+        <p class="kicker">Etapa D · mes 11 a 12</p>
+        <h2>La obra termina. <em>La información queda.</em></h2>
+        <p>As-built, planos récord e inventario de equipos: un gemelo digital para el equipo de mantenimiento.</p>
+        <button class="pill oscuro" data-explorar-hud>Explorar el gemelo en 3D <span>↗</span></button>
       </div>
     </div>
+    <aside id="hudObra">
+      <div class="h-mes"><small>Mes</small><b id="hMes">00</b><span>/ 12</span></div>
+      <div class="h-fases" id="hFases"><b>00</b><b>A</b><b>B</b><b>C</b><b>D</b></div>
+      <div class="h-curva">
+        <div class="h-tit"><small>Honorarios acumulados</small><div class="seg mini-seg" id="hModo"><button data-m="ind" class="on">Indep.</button><button data-m="int">Integrada</button></div></div>
+        <canvas id="hudCurva"></canvas>
+        <div class="h-dos"><span><i class="ln a"></i><b id="hInd">$0 M</b></span><span><i class="ln b"></i><b id="hInt">$0 M</b></span></div>
+      </div>
+      <div class="h-cnt"><div><b id="hMep">0</b><small>elementos MEP trazados</small></div><div><b id="hNiv">0</b><small>niveles construidos</small></div></div>
+      <p class="h-fuente">Cronograma y honorarios: Propuesta BACO v03 · sin IVA</p>
+    </aside>
     <div id="progreso"><i></i><ol id="marcas"></ol></div>
   </section>
 </div>
@@ -158,41 +129,6 @@
     </div>
   </section>
 
-  <!-- II · EL MODELO EN DATOS (real) -->
-  <section class="sec azul" id="datos">
-    <div class="sec-in">
-      <p class="kicker">El modelo en datos</p>
-      <h2>Lo que ya está <em>modelado en el Piso 2</em></h2>
-      <p class="nota reveal">Cifras extraídas del modelo de redes 1001_Hotel_la_fotona_redes.rvt y del modelo arquitectónico HLF_P2-P6.rvt que se ven en el recorrido. Pasa el cursor por las barras.</p>
-      <div class="tablero-datos">
-        <div class="panel-g reveal"><h4>Elementos por sistema</h4><div id="gBarras" class="barras"></div></div>
-        <div class="panel-g reveal"><h4>Detalle</h4><div id="gDetalle" class="detalle"></div><h4>Por disciplina</h4><div class="dona-caja"><div id="gDona" class="dona"></div><ul id="gDonaLeyenda" class="leyenda"></ul></div></div>
-        <div class="panel-g ancho reveal"><h4>Geometría del modelo arquitectónico por nivel</h4><div id="gNiveles" class="columnas"></div><p class="mini">Altura de cada columna = triángulos exportados por nivel; colores = categorías Revit.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- II · DETECTAR ANTES DE INSTALAR -->
-  <section class="sec" id="conflicto">
-    <div class="sec-in dos-col">
-      <div>
-        <p class="kicker">Demostración interactiva</p>
-        <h2>Una decisión <em>antes de construir</em></h2>
-        <p class="nota reveal">Ejemplo conceptual de la presentación: un ducto de climatización atraviesa una viga existente.</p>
-        <div class="seg reveal"><button data-r="0" class="on">Ver conflicto</button><button data-r="1">Ver solución</button></div>
-        <div id="cEstado" class="estado mal"></div>
-      </div>
-      <div class="lamina reveal">
-        <svg viewBox="0 0 580 230">
-          <rect x="0" y="0" width="580" height="22" class="losa" />
-          <rect x="250" y="22" width="80" height="170" class="viga" /><text x="290" y="212" text-anchor="middle" class="rot">VIGA EXISTENTE</text>
-          <path id="cDucto" d="M20 150 L560 150" class="ducto" /><text x="24" y="134" class="rot">DUCTO HVAC</text>
-          <g id="cChoque"><circle cx="290" cy="150" r="34" class="choque" /><text x="290" y="96" text-anchor="middle" class="rot rojo">INTERFERENCIA</text></g>
-        </svg>
-      </div>
-    </div>
-  </section>
-
   <!-- III · CONTROL DE GESTIÓN (ilustrativo) -->
   <section class="sec azul" id="tablero">
     <div class="sec-in">
@@ -221,20 +157,20 @@
     <div class="sec-in">
       <p class="kicker">Acto IV · Inversión</p>
       <h2>Dos modalidades. <em>Un mismo alcance BIM.</em></h2>
-      <p class="nota reveal">Valores en millones de COP, antes de IVA · escenario base de 8 meses de obra · Propuesta v03.</p>
-      <div class="inv">
-        <div class="reveal">
-          <div class="seg" id="iModo"><button data-m="todo" class="on">Comparar</button><button data-m="a">Independiente · $295 M</button><button data-m="b">BIM + construcción · $221,4 M</button></div>
-          <div id="iBarras" class="ibarras" data-foco="todo"></div>
-          <p class="ahorro"><b>$<span data-n="73.6" data-d="1">0</span> M</b> menos en honorarios con la modalidad integrada · 40 % solo en la etapa C ($23 M → $13,8 M por mes).</p>
+      <p class="nota reveal">Mueve la duración de la obra, cambia la modalidad y el presupuesto: los valores salen de la fórmula de la propuesta v03 (millones de COP).</p>
+      <div class="inv-sim reveal"><div class="sim">
+          <div class="sim-ctrl">
+            <div class="seg" id="segModo"><button data-m="ind" class="on">Independiente</button><button data-m="int">BIM + construcción</button></div>
+            <label class="rango"><span>Duración de la obra</span><input type="range" id="rMeses" min="6" max="9" step="1" value="8" /><b id="vMeses">8 meses</b></label>
+            <label class="rango"><span>Presupuesto de obra</span><input type="range" id="rObra" min="5000" max="60000" step="500" value="25000" /><b id="vObra">$25.000 M</b></label>
+          </div>
+          <div class="sim-res">
+            <div><small>Honorarios sin IVA</small><b id="oTotal">—</b></div>
+            <div><small>Con IVA (19 %)</small><b id="oIva">—</b></div>
+            <div><small>Punto de equilibrio</small><b id="oEq">—</b><small>del presupuesto de obra</small></div>
+          </div>
         </div>
-        <div class="reveal">
-          <h4>Sensibilidad por duración de la obra</h4>
-          <div id="iLinea" class="linea"></div>
-          <div id="iTip" class="tip">Pasa el cursor por los puntos</div>
-          <p class="mini"><i class="ln a"></i>Independiente <i class="ln b"></i>BIM + construcción · etapas A, B y D fijas en $111 M</p>
-        </div>
-      </div>
+        <p class="fuente">Fórmula de la propuesta v03: etapas A, B y D fijas $111 M + $23 M por mes de obra (o $13,8 M con equipo de construcción BACO). Punto de equilibrio = honorario / presupuesto. No es una proyección de ahorro.</p></div>
     </div>
   </section>
 

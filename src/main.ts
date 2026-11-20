@@ -8,6 +8,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 import { iniciarComercial } from './comercial';
 import './comercial.css';
+import './premisa.css';
 
 // ───────────────────────── datos ─────────────────────────
 interface Cat { nombre: string; vOff: number; vLen: number; tOff?: number; tLen?: number; uvOff?: number; uvLen?: number }
@@ -107,6 +108,13 @@ const S = {
   ctx: 1,        // opacidad del contexto urbano
   shift: 0,
   mep: 0,        // 0 redes ocultas → 1 redes MEP visibles
+  // ── premisa "construir antes de construir" ──
+  nube: 0,       // 1 = la torre es una nube de puntos de escaneo (LOD 300)
+  noche: 0,      // 1 = fondo azul Estelar (apertura)
+  obra: 1,       // avance de la construcción: los niveles pasan de modelo técnico a obra, de abajo hacia arriba
+  dibujo: 1,     // fracción dibujada de las redes MEP (se trazan tubo a tubo)
+  alerta: 0,     // punto crítico real detectado en el modelo de redes
+  mes: 0,        // reloj del proyecto (0–12)
 };
 type Estado = typeof S;
 /** Interacciones dentro del recorrido: se suman al estado de la timeline sin romper el scrub. */
@@ -283,6 +291,8 @@ async function cargar() {
     hechos++; ($('#cargando i')).style.width = (100 * hechos / man.niveles.length) + '%';
   }));
   await cargarMep();
+  crearNubes();
+  buscarPuntoCritico();
   niveles.forEach((n, i) => n.grupo.children.forEach((o) => { if ((o as THREE.Mesh).isMesh) { o.userData.nivel = i; pickables.push(o as THREE.Mesh); } }));
   // separación final de cada nivel en la axonometría explotada
   niveles.forEach((n, i) => { n.destino = i * 9 + (n.info.nombre === "CUBIERTA" ? 8 : 0); });
@@ -290,11 +300,72 @@ async function cargar() {
   return man;
 }
 
+// ───────────────────────── nube de escaneo + punto crítico ─────────────────────────
+const nubes: THREE.Points[] = [];
+/** Muestrea las superficies reales del modelo (muros, ventanas, losas, cubiertas) como una nube de puntos de escaneo. */
+function crearNubes() {
+  const fuente = ['muros', 'ventanas', 'losas', 'cubiertas', 'paneles', 'columnas'];
+  const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), ab = new THREE.Vector3(), ac = new THREE.Vector3();
+  niveles.forEach((n) => {
+    const pts: number[] = [];
+    n.grupo.children.forEach((o) => {
+      const mesh = o as THREE.Mesh; if (!mesh.isMesh || !fuente.includes(mesh.name)) return;
+      const g = mesh.geometry as THREE.BufferGeometry; const p = g.getAttribute('position'); const idx = g.index;
+      const nt = idx ? idx.count / 3 : p.count / 3;
+      for (let t = 0; t < nt; t++) {
+        const ia = idx ? idx.getX(t * 3) : t * 3, ib = idx ? idx.getX(t * 3 + 1) : t * 3 + 1, ic = idx ? idx.getX(t * 3 + 2) : t * 3 + 2;
+        a.fromBufferAttribute(p, ia); b.fromBufferAttribute(p, ib); c.fromBufferAttribute(p, ic);
+        const area = ab.subVectors(b, a).cross(ac.subVectors(c, a)).length() / 2;
+        let k = area * 2.2; // ≈ 2 puntos por m²
+        while (k > 0) {
+          if (k < 1 && Math.random() > k) break;
+          let u = Math.random(), v = Math.random(); if (u + v > 1) { u = 1 - u; v = 1 - v; }
+          pts.push(a.x + (b.x - a.x) * u + (c.x - a.x) * v, a.y + (b.y - a.y) * u + (c.y - a.y) * v, a.z + (b.z - a.z) * u + (c.z - a.z) * v);
+          k--;
+        }
+      }
+    });
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+    const m = new THREE.PointsMaterial({ color: '#e6c766', size: 0.16, sizeAttenuation: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+    const nube = new THREE.Points(g, m); nube.raycast = () => {}; nube.visible = false;
+    n.grupo.add(nube); nubes.push(nube);
+  });
+}
+
+/** Punto crítico REAL: la menor separación entre la red contra incendios y el conduit eléctrico del Piso 2. */
+const critico = { p: new THREE.Vector3(), d: Infinity, ok: false };
+let marcaCritico: THREE.Mesh | null = null;
+function buscarPuntoCritico() {
+  const p2 = niveles.find((n) => n.info.nombre === 'PISO 2'); if (!p2) return;
+  const get = (nombre: string) => p2.grupo.children.find((o) => o.name === nombre && (o as THREE.Mesh).isMesh) as THREE.Mesh | undefined;
+  const rci = get('rci'), con = get('conduit'); if (!rci || !con) return;
+  const C = 0.25; const celdas = new Map<string, number[]>();
+  const pc = con.geometry.getAttribute('position');
+  for (let i = 0; i < pc.count; i++) {
+    const k = `${Math.floor(pc.getX(i) / C)},${Math.floor(pc.getY(i) / C)},${Math.floor(pc.getZ(i) / C)}`;
+    (celdas.get(k) ?? celdas.set(k, []).get(k)!).push(i);
+  }
+  const pr = rci.geometry.getAttribute('position'); const v = new THREE.Vector3(), w = new THREE.Vector3();
+  for (let i = 0; i < pr.count; i++) {
+    v.fromBufferAttribute(pr, i); if (v.y > 6.5) continue;
+    const cx = Math.floor(v.x / C), cy = Math.floor(v.y / C), cz = Math.floor(v.z / C);
+    for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) for (let dz = -1; dz <= 1; dz++) {
+      const l = celdas.get(`${cx + dx},${cy + dy},${cz + dz}`); if (!l) continue;
+      for (const j of l) { w.fromBufferAttribute(pc, j); const d = v.distanceTo(w); if (d < critico.d) { critico.d = d; critico.p.copy(v).add(w).multiplyScalar(0.5); critico.ok = true; } }
+    }
+  }
+  if (!critico.ok) return;
+  marcaCritico = new THREE.Mesh(new THREE.SphereGeometry(0.45, 32, 16), new THREE.MeshBasicMaterial({ color: '#e0412f', transparent: true, opacity: 0, depthTest: false }));
+  marcaCritico.position.copy(critico.p); marcaCritico.renderOrder = 10; marcaCritico.raycast = () => {};
+  p2.grupo.add(marcaCritico);
+}
+
 // ───────────────────────── aplicar estado ─────────────────────────
 const tmpC = new THREE.Color();
+const NAVY = new THREE.Color('#0e3064');
 function aplicar(st: Estado) {
-  // explosión escalonada: cubierta (20–45 %), plantas altas (45–70 %), todas (70–100 %)
-  const e = st.explode, nTop = niveles.length - 1;
+  const e = st.explode, nTop = niveles.length - 1, N = niveles.length;
+  const tiempo = performance.now() / 1000;
   niveles.forEach((n, i) => {
     const w = i === nTop ? ss(0.2, 0.45, e) : i >= 3 ? ss(0.45, 0.7, e) : ss(0.7, 1, e);
     n.grupo.position.y = n.destino * w;
@@ -303,28 +374,48 @@ function aplicar(st: Estado) {
     n.vis = visNivel * dim;
     n.grupo.visible = n.vis > 0.01;
     n.hl = THREE.MathUtils.lerp(n.hl, st.sel === i ? 1 : 0, 0.12);
+    // construcción por niveles: cada piso pasa de modelo técnico a obra terminada, con un destello dorado al "construirse"
+    const hecho = ss(i / N, (i + 1) / N, st.obra);
+    const bimN = Math.max(st.bim, 1 - hecho);
+    const destello = Math.sin(Math.PI * hecho) * (st.obra < 0.999 ? 1 : 0);
+    const solido = 1 - st.nube;
     for (const [cat, m] of n.mats) {
       const def = m.userData.def as typeof CATS[string];
-      m.color.copy(tmpC.set(def.arq)).lerp(new THREE.Color(def.tec), st.bim);
-      let op = def.vidrio ? THREE.MathUtils.lerp(0.5, 0.35, st.bim) : 1;
+      m.color.copy(tmpC.set(def.arq)).lerp(new THREE.Color(def.tec), def.mep ? 0 : bimN);
+      let op = def.vidrio ? THREE.MathUtils.lerp(0.5, 0.35, bimN) : 1;
       if (def.cerr) op *= THREE.MathUtils.lerp(1, def.vidrio ? 0.25 : 0.14, st.cerr);
       if (def.mep) op *= st.mep;
-      op *= n.vis;
+      op *= n.vis * solido;
       m.opacity = op; m.transparent = op < 0.999; m.depthWrite = op > 0.6;
-      if (def.mep) m.emissive.set(def.arq).multiplyScalar(0.6); else m.emissive.copy(ACENTO).multiplyScalar(0.35 * n.hl);
-      m.visible = catsVisibles.has(cat) && (!def.mep || st.mep > 0.01);
-      if (m.userData.uMapa) { m.userData.uMapa.value = 1 - st.bim; m.normalScale.setScalar(1 - st.bim); }
+      if (def.mep) m.emissive.set(def.arq).multiplyScalar(0.6);
+      else m.emissive.copy(ACENTO).multiplyScalar(0.35 * n.hl + 0.9 * destello);
+      m.visible = catsVisibles.has(cat) && (!def.mep || st.mep > 0.01) && op > 0.005;
+      if (m.userData.uMapa) { m.userData.uMapa.value = 1 - bimN; m.normalScale.setScalar(1 - bimN); }
     }
-    n.lineas.opacity = st.bordes * n.vis;
+    n.lineas.opacity = Math.max(st.bordes, 0.45 * (1 - hecho) * (1 - st.nube)) * n.vis;
     n.lineas.color.set('#6a7d99').lerp(new THREE.Color('#0e3064'), st.tinta);
-    n.grupo.children.forEach((o) => { if ((o as THREE.LineSegments).isLineSegments) o.visible = st.bordes > 0.01 && catsVisibles.has(o.userData.cat); });
+    const verLineas = n.lineas.opacity > 0.01;
+    n.grupo.children.forEach((o) => { if ((o as THREE.LineSegments).isLineSegments) o.visible = verLineas && catsVisibles.has(o.userData.cat); });
+    // nube de escaneo con brillo que respira
+    const nube = nubes[i];
+    if (nube) { const pm = nube.material as THREE.PointsMaterial; pm.opacity = st.nube * n.vis * (0.75 + 0.25 * Math.sin(tiempo * 2 + i)); nube.visible = pm.opacity > 0.01; }
   });
+  // redes trazadas tubo a tubo
+  const p2 = niveles.find((n) => n.info.nombre === 'PISO 2');
+  p2?.grupo.children.forEach((o) => { if (o.userData.mep) { const g = (o as THREE.Mesh).geometry; const c = g.index!.count; g.setDrawRange(0, Math.floor((c * st.dibujo) / 3) * 3); } });
+  if (marcaCritico) {
+    const mm = marcaCritico.material as THREE.MeshBasicMaterial;
+    mm.opacity = st.alerta * (0.55 + 0.35 * Math.sin(tiempo * 6)); marcaCritico.visible = mm.opacity > 0.01;
+    marcaCritico.scale.setScalar(1 + 0.35 * Math.sin(tiempo * 3));
+  }
   corte.constant = st.corteY;
   (grilla.material as THREE.Material).opacity = 0.6 * st.grilla;
-  (suelo.material as THREE.ShadowMaterial).opacity = 0.16 * (1 - st.orto) * (1 - st.bim * 0.6);
+  (suelo.material as THREE.ShadowMaterial).opacity = 0.16 * (1 - st.orto) * (1 - st.bim * 0.6) * (1 - st.noche);
   sol.intensity = THREE.MathUtils.lerp(2.4, 1.2, st.bim);
   ctxGrupo.visible = st.ctx > 0.01;
   for (const m of ctxMats) { const op = m.userData.baseOp * st.ctx; m.opacity = op; m.transparent = op < 0.999; m.depthWrite = op > 0.5; }
+  (scene.background as THREE.Color).copy(PAPEL).lerp(NAVY, st.noche);
+  niebla.color.copy(scene.background as THREE.Color);
   scene.fog = hayContexto && st.orto < 0.05 ? niebla : null;
 }
 
@@ -365,102 +456,123 @@ function actualizarEtiquetas() {
   }
 }
 
-// ───────────────────────── recorrido (MODO A) ─────────────────────────
+// ───────────────────────── recorrido (MODO A): "construir antes de construir" ─────────────────────────
+// El scroll es el reloj del proyecto: mes 0 → 12, con las etapas y honorarios de la Propuesta BACO v03.
 let tl: gsap.core.Timeline; let st: ScrollTrigger;
-const ESC = 10; // unidades de timeline por escena
-let escenaActual = 1;
+let escenaActual = 1; // 1 apertura · 2 A · 3 B · 4 C · 5 D
+const FASES = [
+  { k: '00', nombre: 'Escaneo', t0: 0 }, { k: 'A', nombre: 'Estructurar', t0: 10 }, { k: 'B', nombre: 'Coordinar', t0: 25 },
+  { k: 'C', nombre: 'Construir', t0: 55 }, { k: 'D', nombre: 'Entregar', t0: 105 },
+];
+const T_FIN = 130;
+/** Honorarios acumulados (millones COP, sin IVA) según el cronograma de la propuesta: A mes 0–1, B 1–3, C 3–11, D 11–12. */
+function honorarios(m: number, integrada: boolean) {
+  const r = integrada ? 13.8 : 23;
+  if (m <= 1) return 33 * m;
+  if (m <= 3) return 33 + 47 * ((m - 1) / 2);
+  if (m <= 11) return 80 + r * (m - 3);
+  return 80 + 8 * r + 31 * Math.min(1, m - 11);
+}
+let totalMep = 0;
 function construirRecorrido() {
   const nivelP2 = niveles.findIndex((n) => n.info.nombre === 'PISO 2');
   const elevP2 = niveles[nivelP2]?.info.elev ?? 3;
-  const cut = elevP2 + 1.6;
-  const c2 = niveles[nivelP2].caja.getCenter(new THREE.Vector3()); // centro de la planta del Piso 2
-  const cm = cajaMep.isEmpty() ? c2 : centroMep; // centro de las redes
+  const c2 = niveles[nivelP2].caja.getCenter(new THREE.Vector3());
+  const cm = cajaMep.isEmpty() ? c2 : centroMep;
+  const cp = critico.ok ? critico.p : cm;
+  totalMep = (mepInfo?.cats ?? []).reduce((s, c) => s + c.elementos, 0);
+  // estado de apertura: la torre es una nube de escaneo sobre azul Estelar
+  Object.assign(S, { nube: 1, noche: 1, ctx: 0, bim: 1, obra: 0, dibujo: 0, mep: 0, az: 48, el: 14, dist: 112, ty: 10 });
   tl = gsap.timeline({ defaults: { ease: 'none' }, paused: true });
-  const T = (obj: object, at: number, dur: number) => tl.to(S, { ...obj, duration: dur }, at);
+  const T = (obj: object, at: number, dur: number, ease = 'none') => tl.to(S, { ...obj, duration: dur, ease }, at);
 
-  // 01 · El hotel emerge — avance, desplazamiento lateral, elevación
-  T({ dist: 84 }, 0, 2.5);
-  T({ az: -38 }, 2.5, 3.5);
-  T({ el: 38, dist: 112, ty: 6 }, 6, 4);
-  tl.to('.titulo .w', { yPercent: -70, opacity: 0, stagger: 0.5, duration: 3 }, 3);
-  tl.to('.hero-der', { y: -60, opacity: 0, duration: 2.5 }, 2.5);
-  tl.to('#velo', { opacity: 0, duration: 4 }, 4);
-  const total = new THREE.Box3(); niveles.forEach((n) => total.union(n.caja));
-  const cnt = { niveles: 0, altura: 0, cats: 0 };
-  const nCats = new Set(niveles.flatMap((n) => [...n.mats.keys()])).size;
-  const pintarCnt = () => {
-    document.querySelector('[data-cnt="niveles"]')!.textContent = String(Math.round(cnt.niveles));
-    document.querySelector('[data-cnt="altura"]')!.textContent = cnt.altura.toFixed(1).replace('.', ',');
-    document.querySelector('[data-cnt="cats"]')!.textContent = String(Math.round(cnt.cats));
-  };
-  tl.to(cnt, { niveles: niveles.length, altura: total.max.y, cats: nCats, duration: 3, ease: 'power2.out', onUpdate: pintarCnt }, 10.6);
+  // reloj del proyecto
+  T({ mes: 1 }, 10, 15); T({ mes: 3 }, 25, 30); T({ mes: 11 }, 55, 50); T({ mes: 12 }, 105, 20);
 
-  // 02 · Vista aérea oblicua + órbita parcial; etiquetas ancladas
-  T({ el: 58, dist: 150, az: -10, ty: 4 }, 10, 4);
-  T({ az: 52 }, 14, 6);
-  T({ grilla: 0, shift: 0.14 }, 10, 3);
+  // 00 · Escaneo (mes 0): la nube gira despacio
+  T({ az: 18, el: 20, dist: 104 }, 0, 10);
+  tl.to('.titulo .w', { yPercent: -80, opacity: 0, stagger: 0.6, duration: 4 }, 4);
+  tl.to('.hero-der', { y: -60, opacity: 0, duration: 3 }, 4);
+  tl.to('#velo', { opacity: 0, duration: 5 }, 6);
 
-  // 03 · Explosión arquitectónica (axonometría)
-  T({ az: 45, el: 30, dist: 165, ty: 22 }, 20, 3);
-  T({ explode: 1, dist: 190, ty: 30 }, 22, 8);
+  // A · Estructurar: la nube se condensa en el modelo técnico, el día se aclara
+  T({ nube: 0 }, 11, 7, 'power1.inOut');
+  T({ noche: 0 }, 12, 8);
+  T({ bordes: 0.5, az: -32, el: 30, dist: 128 }, 11, 14, 'power1.inOut');
 
-  // 04 · Entrar al edificio (Piso 2)
-  T({ explode: 0 }, 30, 3);
-  T({ verHasta: nivelP2, ty: elevP2, tx: c2.x, tz: c2.z }, 31.5, 3);
-  T({ corteY: cut }, 32.5, 2.5);
-  T({ az: 28, el: 42, dist: 72 }, 32, 4);
-  T({ az: -18, el: 36, dist: 50 }, 36, 4);
+  // B · Coordinar: las redes reales del Piso 2 se trazan y aparece el punto crítico
+  T({ verHasta: nivelP2, corteY: elevP2 + 2.75, cerr: 0.92, bordes: 0.22, mep: 1, ctx: 0, az: 14, el: 52, dist: 44, ty: elevP2 + 2, tx: cm.x, tz: cm.z, shift: 0.16 }, 25, 5, 'power2.inOut');
+  T({ dibujo: 1 }, 29, 16, 'power1.in');
+  T({ alerta: 1 }, 44, 2);
+  T({ tx: cp.x, ty: cp.y, tz: cp.z, dist: 9, el: 38, az: 40 }, 45, 6, 'power2.inOut');
+  T({ dist: 40, el: 50, az: 0, tx: cm.x, tz: cm.z, ty: elevP2 + 2 }, 51, 4, 'power2.inOut');
 
-  // 05 · Arquitectura → BIM
-  T({ verHasta: 9, corteY: 999, ty: 9, tx: 0, tz: 0 }, 40, 2);
-  T({ az: 45, el: 28, dist: 130 }, 40, 3);
-  T({ bim: 1, bordes: 0.55, ctx: 0.3 }, 41.5, 2.5);
-  T({ cerr: 1 }, 43.5, 1.5);
-  // las redes del Piso 2 quedan expuestas: se retiran los pisos de arriba y se corta sobre el cielo raso
-  T({ verHasta: nivelP2, corteY: elevP2 + 2.75, mep: 1, cerr: 0.92, bordes: 0.22, az: 12, el: 52, dist: 40, ty: elevP2 + 2, tx: cm.x, tz: cm.z, ctx: 0, shift: 0.18 }, 44.5, 3);
+  // C · Construir: los pisos pasan de modelo a obra, de abajo hacia arriba
+  T({ alerta: 0, verHasta: 9, corteY: 999, cerr: 0, mep: 0, tx: 0, tz: 0, ty: 9, az: -40, el: 24, dist: 132, shift: 0.12, bim: 0, ctx: 0.7 }, 55, 5, 'power2.inOut');
+  T({ obra: 1 }, 58, 42, 'power1.inOut');
+  T({ az: 95, el: 20, dist: 122, ctx: 1 }, 60, 45);
+  T({ bordes: 0 }, 96, 6);
 
-  // 06 · Del edificio al plano
-  T({ verHasta: nivelP2, corteY: cut, cerr: 0, ty: elevP2, mep: 0 }, 50, 2);
-  T({ az: 0, el: 89.5, dist: 105, tx: c2.x, tz: c2.z }, 50, 5);
-  T({ bordes: 1, tinta: 1, grilla: 0, ctx: 0 }, 52, 4);
-  T({ orto: 1 }, 53, 5);
+  // D · Entregar: gemelo digital (fachada translúcida, redes visibles)
+  T({ cerr: 0.6, mep: 1, az: 55, el: 34, dist: 96, ty: 7, tx: c2.x, tz: c2.z, ctx: 0.25 }, 105, 10, 'power2.inOut');
+  T({ cerr: 0, mep: 0, az: 15, el: 22, dist: 125, ty: 9, tx: 0, tz: 0, ctx: 1 }, 120, 10, 'power2.inOut');
 
-  // 07 · Remodelación — vuelve a la representación realista
-  T({ orto: 0, bim: 0, bordes: 0, tinta: 0, verHasta: 9, corteY: 999, ctx: 1, tx: 0, tz: 0 }, 60, 3);
-  T({ az: 70, el: 20, dist: 120, ty: 9 }, 60, 4);
-  T({ az: 105 }, 64, 6);
+  // tarjetas de cada fase
+  FASES.forEach((f, i) => {
+    const el = `.escena[data-e="${i + 1}"]`; const fin = FASES[i + 1]?.t0 ?? T_FIN;
+    if (i === 0) gsap.set(el, { autoAlpha: 1 });
+    else tl.fromTo(el, { autoAlpha: 0, y: 50 }, { autoAlpha: 1, y: 0, duration: 2, ease: 'power2.out' }, f.t0 + 1);
+    if (i < FASES.length - 1) tl.to(el, { autoAlpha: 0, y: -50, duration: 2 }, fin - 2.5);
+  });
+  // tablero en vivo: entra al terminar la apertura
+  tl.fromTo('#hudObra', { autoAlpha: 0, x: 40 }, { autoAlpha: 1, x: 0, duration: 3, ease: 'power2.out' }, 8);
+  tl.set({}, {}, T_FIN);
 
-  // 08 · Ruta BACO
-  T({ shift: 0.24 }, 70, 2);
-  T({ az: 20, el: 30, dist: 150, ty: 9 }, 70, 10);
-
-  // 09 · Inversión: el edificio gira despacio detrás del simulador
-  T({ az: -40, el: 42, dist: 190, ty: 10 }, 80, 10);
-
-  // textos por escena
-  const N = 9;
-  for (let e = 1; e <= N; e++) {
-    const el = `.escena[data-e="${e}"]`, a = (e - 1) * ESC;
-    if (e === 1) gsap.set(el, { autoAlpha: 1 });
-    else tl.fromTo(el, { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 1 }, a + 0.3);
-    if (e < N) tl.to(el, { autoAlpha: 0, y: -40, duration: 1 }, a + ESC - 1.2);
-  }
-  tl.set({}, {}, N * ESC);
-
-  // marcas de progreso
-  const nombres = ['Inicio', 'Edificio', 'Niveles', 'Interior', 'BIM', 'Plano', 'Remodelación', 'Ruta', 'Inversión'];
-  $('#marcas').innerHTML = nombres.map((n, i) => `<li style="top:${(i / N) * 100}%">${String(i + 1).padStart(2, '0')} ${n}</li>`).join('');
-
+  $('#marcas').innerHTML = FASES.map((f) => `<li style="top:${(f.t0 / T_FIN) * 100}%">${f.k} · ${f.nombre}</li>`).join('');
   st = ScrollTrigger.create({
-    trigger: '#escenario', start: 'top top', end: () => '+=' + innerHeight * 17,
+    trigger: '#escenario', start: 'top top', end: () => '+=' + innerHeight * 20,
     pin: true, anticipatePin: 1, scrub: true, invalidateOnRefresh: true, animation: tl,
     onUpdate: (self) => {
       ($('#progreso i')).style.height = (self.progress * 100) + '%';
-      const e = Math.min(N, Math.floor(self.progress * N) + 1);
+      const t = self.progress * T_FIN; let e = 1; FASES.forEach((f, i) => { if (t >= f.t0) e = i + 1; });
       if (e !== escenaActual) document.querySelectorAll('#marcas li').forEach((li, i) => li.classList.toggle('on', i === e - 1));
       escenaActual = e;
     },
   });
+}
+
+// ── tablero en vivo (HUD) ──
+let hudIntegrada = false;
+const hudCnv = () => document.getElementById('hudCurva') as HTMLCanvasElement | null;
+function pintarHud() {
+  const m = S.mes;
+  const set = (id: string, v: string) => { const el = document.getElementById(id); if (el && el.textContent !== v) el.textContent = v; };
+  set('hMes', String(Math.floor(m)).padStart(2, '0'));
+  const ind = honorarios(m, false), int = honorarios(m, true);
+  set('hInd', '$' + ind.toLocaleString('es-CO', { maximumFractionDigits: 1, minimumFractionDigits: 1 }) + ' M');
+  set('hInt', '$' + int.toLocaleString('es-CO', { maximumFractionDigits: 1, minimumFractionDigits: 1 }) + ' M');
+  set('hMep', Math.round(totalMep * S.dibujo).toLocaleString('es-CO'));
+  set('hNiv', String(Math.round(S.obra * niveles.length)));
+  const fase = m < 0.02 ? 0 : m <= 1 ? 1 : m <= 3 ? 2 : m < 11 ? 3 : 4; // etapa según el reloj del proyecto
+  document.querySelectorAll('#hFases b').forEach((b, i) => { b.classList.toggle('on', i === fase); b.classList.toggle('hecho', i < fase); });
+  // curva de honorarios acumulados, dibujada hasta el mes actual
+  const c = hudCnv(); if (!c) return;
+  const dpr = Math.min(2, devicePixelRatio); const W = c.clientWidth, H = c.clientHeight;
+  if (c.width !== W * dpr) { c.width = W * dpr; c.height = H * dpr; }
+  const x = c.getContext('2d')!; x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, W, H);
+  const P = 6, X = (mm: number) => P + (mm / 12) * (W - 2 * P), Y = (v: number) => H - P - (v / 300) * (H - 2 * P - 10);
+  x.strokeStyle = 'rgba(255,255,255,.08)'; x.lineWidth = 1;
+  for (const k of [1, 3, 11]) { x.beginPath(); x.moveTo(X(k), P); x.lineTo(X(k), H - P); x.stroke(); }
+  const serie = (integ: boolean, color: string, foco: boolean) => {
+    x.beginPath(); for (let mm = 0; mm <= m + 1e-6; mm += 0.05) { const v = honorarios(Math.min(mm, m), integ); mm === 0 ? x.moveTo(X(mm), Y(v)) : x.lineTo(X(mm), Y(v)); }
+    x.lineTo(X(m), Y(honorarios(m, integ)));
+    x.strokeStyle = color; x.lineWidth = foco ? 2.6 : 1.6; x.globalAlpha = foco ? 1 : 0.55; x.shadowColor = color; x.shadowBlur = foco ? 10 : 0; x.stroke();
+    x.shadowBlur = 0;
+    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, color + (foco ? '55' : '22')); g.addColorStop(1, color + '00');
+    x.lineTo(X(m), H - P); x.lineTo(X(0), H - P); x.closePath(); x.fillStyle = g; x.fill(); x.globalAlpha = 1;
+    x.beginPath(); x.arc(X(m), Y(honorarios(m, integ)), foco ? 4.5 : 3, 0, Math.PI * 2); x.fillStyle = '#fff'; x.fill();
+  };
+  serie(true, '#b59535', hudIntegrada); serie(false, '#7fb0ff', !hudIntegrada);
 }
 
 // ───────────────────────── exploración libre (MODO B) ─────────────────────────
@@ -477,7 +589,7 @@ function entrarLibre(focoNivel?: number) {
   document.documentElement.style.overflow = 'hidden';
   camera.clearViewOffset(); S.shift = 0;
   controls.target.copy(objetivo); controls.enabled = true; controls.update();
-  gsap.to(S, { orto: 0, duration: 0.8 });
+  gsap.to(S, { orto: 0, nube: 0, noche: 0, obra: 1, dibujo: 1, alerta: 0, shift: 0, duration: 0.8 });
   $('#volver').hidden = false;
   if (focoNivel !== undefined) enfocarNivel(focoNivel);
   else gsap.to(S, { explode: 0, cerr: 0, bim: 0, bordes: 0, tinta: 0, verHasta: 9, corteY: 999, sel: -1, dimOtros: 0, duration: 1 });
@@ -565,8 +677,7 @@ canvas.addEventListener('pointerup', (ev) => {
   const h = pick(ev); if (!h) return;
   const i = h.object.userData.nivel as number;
   if (modo === 'cine') {
-    if (escenaActual === 2) entrarLibre();
-    else if (escenaActual === 3) entrarLibre(i);
+    if (escenaActual === 4) entrarLibre(i); else if (escenaActual > 1) entrarLibre();
     return;
   }
   const cat = h.object.userData.cat as string; const n = niveles[i];
@@ -580,10 +691,10 @@ canvas.addEventListener('pointerup', (ev) => {
   if (nivelSel !== i) enfocarNivel(i);
 });
 canvas.addEventListener('pointermove', (ev) => {
-  const activo = modo === 'libre' || escenaActual === 2 || escenaActual === 3;
+  const activo = modo === 'libre' || escenaActual > 1;
   const h = activo ? pick(ev) : undefined;
   canvas.style.cursor = h ? 'pointer' : '';
-  if (modo === 'cine' && escenaActual === 3) S.sel = h ? h.object.userData.nivel : -1;
+  if (modo === 'cine' && escenaActual === 4) S.sel = h ? h.object.userData.nivel : -1;
 });
 
 // ───────────────────────── UI ─────────────────────────
@@ -609,40 +720,28 @@ function ui() {
   });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && modo === 'libre') salirLibre(); });
   landing();
-  $('#notaRemodel').textContent = 'La comparación con clipping necesita dos modelos: el de condiciones existentes (LOD 300, a cargo del proveedor de escaneo según la propuesta) y el de remodelación. Por ahora solo está cargado el modelo de remodelación HLF_P2-P6.';
 }
 
 // ───────────────────────── landing: interacciones dentro del recorrido ─────────────────────────
-/** Entregables y honorarios por etapa: Propuesta comercial BACO Studio v03 (9 nov 2026). */
-const DET: Record<string, string> = {
-  '00': '<b>Proveedor de escaneo</b> (contratado por el propietario): levantamiento 3D y modelo de condiciones existentes LOD 300. BACO revisa coordenadas, consistencia y zonas no verificadas.',
-  A: '<b>$33 M</b> · BEP marco y operativo, EIR/AIR, protocolo CDE, matriz LOD 400, anexos y evaluación BIM de proponentes.',
-  B: '<b>$47 M</b> · Modelo federado por hito, reportes de interferencias, minutas y registro de incidencias.',
-  C: '<b>$184 M</b> independiente · <b>$110,4 M</b> con equipo de construcción BACO · Informes BIM mensuales, control de versiones, registro de RFI y cambios.',
-  D: '<b>$31 M</b> · Federado as-built, planos récord por especialidad, inventario de equipos y paquete de activos digitales.',
-};
-function irAEscena(e: number) {
-  const N = 9; const y = st.start + (st.end - st.start) * ((e - 1 + 0.55) / N);
-  window.scrollTo({ top: y, behavior: 'smooth' });
+function irAFase(f: number) {
+  const t = (FASES[f - 1]?.t0 ?? 0) + (f === 3 ? 20 : 6);
+  window.scrollTo({ top: st.start + (st.end - st.start) * (t / T_FIN), behavior: 'smooth' });
 }
 function landing() {
   addEventListener('pointermove', (ev) => { if (modo === 'cine') { U.tpx = ev.clientX / innerWidth - 0.5; U.tpy = ev.clientY / innerHeight - 0.5; } });
-  document.querySelectorAll<HTMLElement>('[data-ir]').forEach((b) => b.addEventListener('click', () => irAEscena(+b.dataset.ir!)));
-  $('#marcas').addEventListener('click', (e) => { const li = (e.target as HTMLElement).closest('li'); if (li) irAEscena([...li.parentElement!.children].indexOf(li) + 1); });
-  // 03 · niveles
-  $('#chipsNiveles').innerHTML = niveles.map((n, i) => `<button class="chip" data-n="${i}">${n.info.nombre}</button>`).join('');
-  $('#chipsNiveles').addEventListener('mouseover', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (b) S.sel = +b.dataset.n!; });
-  $('#chipsNiveles').addEventListener('mouseleave', () => { S.sel = -1; });
-  $('#chipsNiveles').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (b) entrarLibre(+b.dataset.n!); });
-  // 04 · altura de corte
-  const rc = $<HTMLInputElement>('#rCorte');
-  rc.addEventListener('input', () => { const v = +rc.value; U.corteExtra = v - 1.6; $('#vCorte').textContent = v.toFixed(2).replace('.', ',') + ' m'; });
-  // 05 · disciplinas
+  document.querySelectorAll<HTMLElement>('[data-ir]').forEach((b) => b.addEventListener('click', () => irAFase(+b.dataset.ir!)));
+  $('#marcas').addEventListener('click', (e) => { const li = (e.target as HTMLElement).closest('li'); if (li) irAFase([...li.parentElement!.children].indexOf(li) + 1); });
+  $('#hModo').addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('button'); if (!b) return;
+    hudIntegrada = b.dataset.m === 'int';
+    document.querySelectorAll('#hModo button').forEach((x) => x.classList.toggle('on', x === b));
+  });
+  // B · disciplinas de las redes
   const pintarDisc = () => {
-    $('#chipsDisc').innerHTML = DISCS.filter((d) => Object.entries(CATS).some(([c, v]) => v.disc === d && niveles.some((n) => n.mats.has(c)))).map((d) => {
+    $('#chipsDisc').innerHTML = DISCS.filter((d) => Object.entries(CATS).some(([c, v]) => v.disc === d && v.mep && niveles.some((n) => n.mats.has(c)))).map((d) => {
       const on = Object.entries(CATS).some(([c, v]) => v.disc === d && catsVisibles.has(c));
       const color = Object.values(CATS).find((v) => v.disc === d && v.mep)?.arq;
-      return `<button class="chip ${on ? 'on' : ''}" data-d="${d}">${color ? `<i style="background:${color}"></i>` : ''}${d}</button>`;
+      return `<button class="chip ${on ? 'on' : ''}" data-d="${d}"><i style="background:${color}"></i>${d}</button>`;
     }).join('');
   };
   pintarDisc();
@@ -653,22 +752,13 @@ function landing() {
     cats.forEach((c) => on ? catsVisibles.delete(c) : catsVisibles.add(c));
     pintarDisc();
   });
-  // 06 · planta por nivel
-  const conPlanta = niveles.map((n, i) => ({ n, i })).filter(({ n }) => n.mats.has('muros') && n.info.nombre !== 'PISO 1');
-  const p2 = niveles.findIndex((n) => n.info.nombre === 'PISO 2');
-  const pintarPlano = () => { $('#chipsPlano').innerHTML = conPlanta.map(({ n, i }) => `<button class="chip ${(U.planoNivel < 0 ? p2 : U.planoNivel) === i ? 'on' : ''}" data-n="${i}">${n.info.nombre}</button>`).join(''); };
-  pintarPlano();
-  $('#chipsPlano').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; U.planoNivel = +b.dataset.n!; pintarPlano(); });
-  // 08 · etapas
-  const pintarEtapa = (k: string) => {
-    document.querySelectorAll('.etapa').forEach((el) => el.classList.toggle('on', (el as HTMLElement).dataset.k === k));
-    const det = $('#etapaDet'); det.innerHTML = DET[k];
-    gsap.fromTo(det, { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out' });
-  };
-  $('#etapas').innerHTML = ETAPAS.map(([k, t, d]) => `<button class="etapa" data-k="${k}"><b>${k}</b><strong>${t}</strong><span>${d}</span></button>`).join('');
-  $('#etapas').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.etapa'); if (b) pintarEtapa(b.dataset.k!); });
-  pintarEtapa('A');
-  // 09 · simulador (fórmula de la propuesta)
+  if (critico.ok) $('#txtCritico').innerHTML = `Separación mínima medida en el modelo entre la red contra incendios y el conduit eléctrico: <b>${(critico.d * 100).toFixed(1).replace('.', ',')} cm</b>. Un punto así se lleva a la mesa técnica antes de instalar.`;
+  // C · pisos
+  $('#chipsNiveles').innerHTML = niveles.map((n, i) => `<button class="chip" data-n="${i}">${n.info.nombre}</button>`).join('');
+  $('#chipsNiveles').addEventListener('mouseover', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (b) S.sel = +b.dataset.n!; });
+  $('#chipsNiveles').addEventListener('mouseleave', () => { S.sel = -1; });
+  $('#chipsNiveles').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (b) entrarLibre(+b.dataset.n!); });
+  // simulador (sección de inversión)
   let integrada = false;
   const M = (v: number) => '$' + v.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' M';
   const vis = { total: 0, iva: 0, eq: 0 };
@@ -700,8 +790,6 @@ addEventListener('resize', resize);
 function frame() {
   const E = { ...S };
   if (modo === 'cine') {
-    if (E.corteY < 500) E.corteY += U.corteExtra;
-    if (escenaActual === 6 && U.planoNivel >= 0) { const n = niveles[U.planoNivel]; E.verHasta = U.planoNivel; E.corteY = n.info.elev + 1.6; E.ty = n.info.elev; }
     U.px += (U.tpx - U.px) * 0.05; U.py += (U.tpy - U.py) * 0.05;
     E.az += U.px * 7 * (1 - E.orto); E.el = THREE.MathUtils.clamp(E.el - U.py * 3 * (1 - E.orto), 2, 89.6);
   }
@@ -710,6 +798,7 @@ function frame() {
   document.body.classList.toggle('pasado', pasado);
   if (pasado) { requestAnimationFrame(frame); return; }
   aplicar(E);
+  if (modo === 'cine') pintarHud();
   if (modo === 'cine') camaraDesde(E);
   else { controls.update(); camera.fov = THREE.MathUtils.lerp(35, 5, S.orto); camera.near = 0.5 + 20 * S.orto; camera.far = 4000; camera.updateProjectionMatrix(); }
   actualizarEtiquetas();
@@ -721,20 +810,18 @@ function frame() {
   const man = await cargar();
   cargarContexto(man.enu).catch((e) => console.warn('contexto', e));
   ui();
-  // etiquetas: edificio (escena 02) y niveles (escena 03 / exploración)
-  const total = new THREE.Box3(); niveles.forEach((n) => total.union(n.caja));
-  etiqueta('Torre Suites · ver en 3D', () => new THREE.Vector3(0, total.max.y + 2, 0),
-    () => modo === 'cine' && escenaActual === 2 ? 1 : 0, () => entrarLibre());
-  niveles.forEach((n, i) => etiqueta(n.info.nombre, () => new THREE.Vector3(n.caja.max.x, n.info.elev + n.grupo.position.y + 1.5, n.caja.getCenter(pv).z),
-    () => (modo === 'cine' && escenaActual === 3 ? ss(0.6, 0.9, S.explode) : 0) || (modo === 'libre' && S.explode > 0.6 ? n.vis : 0),
-    () => entrarLibre(i)));
+  // etiqueta anclada al punto crítico real del modelo de redes
+  const wp = new THREE.Vector3();
+  etiqueta('Punto crítico · RCI ↔ conduit', () => (marcaCritico ? marcaCritico.getWorldPosition(wp).add(new THREE.Vector3(0, 0.9, 0)) : wp),
+    () => (modo === 'cine' && marcaCritico ? S.alerta : 0), () => entrarLibre(niveles.findIndex((n) => n.info.nombre === 'PISO 2')));
   construirRecorrido();
   iniciarComercial({
     redes: (mepInfo?.cats ?? []).filter((c) => CATS[c.nombre]).map((c) => ({ nombre: CATS[c.nombre].nombre, disc: CATS[c.nombre].disc, color: CATS[c.nombre].arq === '#0e3064' ? '#7fa6e0' : CATS[c.nombre].arq, elementos: c.elementos, tris: c.tLen! / 3 })),
     niveles: niveles.map((n) => ({ nombre: n.info.nombre, cats: n.info.cats.filter((c) => CATS[c.nombre]).map((c) => ({ nombre: CATS[c.nombre].nombre, tris: (c.tLen ?? c.vLen / 3) / 3, color: c.nombre === 'cubiertas' ? '#a5563b' : CATS[c.nombre].arq })) })),
   });
-  document.querySelector('[data-arriba]')?.addEventListener('click', () => irAEscena(1));
+  document.querySelector('[data-arriba]')?.addEventListener('click', () => irAFase(1));
   document.querySelector('[data-explorar]')?.addEventListener('click', () => entrarLibre());
+  document.querySelector('[data-explorar-hud]')?.addEventListener('click', () => entrarLibre());
   pintarPanel();
   $('#cargando').classList.add('fin');
   gsap.from('.titulo .w', { yPercent: 110, opacity: 0, stagger: 0.14, duration: 1.4, ease: 'power3.out', delay: 0.3 });

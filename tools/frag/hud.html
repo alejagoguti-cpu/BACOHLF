@@ -1,0 +1,50 @@
+<div class="hud">
+      <div class="escena hero" data-e="1">
+        <p class="hero-k">BACO Studio · Estelar La Fontana · Torre Suites</p>
+        <h1 class="titulo"><span class="w">Construir</span> <span class="w">antes de</span> <span class="w">construir.</span></h1>
+        <div class="hero-der">
+          <p>La Torre Suites se levanta dos veces: primero en el modelo, después en la obra. Desliza y recorre sus 12 meses.</p>
+          <button class="pill" data-ir="2">Empezar <span>↓</span></button>
+        </div>
+      </div>
+
+      <div class="escena tarjeta" data-e="2">
+        <p class="kicker">Etapa A · mes 0 a 1</p>
+        <h2>Del escaneo <em>a un modelo con reglas</em></h2>
+        <p>La nube del levantamiento LOD 300 se vuelve un modelo coordinable. Antes de contratar se fijan las reglas del juego.</p>
+        <div class="chips"><span class="chip">BEP</span><span class="chip">EIR / AIR</span><span class="chip">CDE</span><span class="chip">Matriz LOD 400</span></div>
+      </div>
+
+      <div class="escena tarjeta" data-e="3">
+        <p class="kicker">Etapa B · mes 1 a 3</p>
+        <h2>Cada tubo, <em>antes de instalarlo</em></h2>
+        <p>Así se trazan las redes reales del Piso 2. Enciende o apaga cada sistema:</p>
+        <div class="chips" id="chipsDisc"></div>
+        <p class="critico" id="txtCritico"></p>
+      </div>
+
+      <div class="escena tarjeta" data-e="4">
+        <p class="kicker">Etapa C · mes 3 a 11</p>
+        <h2>La obra sigue <em>al modelo</em></h2>
+        <p>Cada piso pasa del modelo técnico a la obra terminada. Elige uno para entrar:</p>
+        <div class="chips" id="chipsNiveles"></div>
+      </div>
+
+      <div class="escena tarjeta" data-e="5">
+        <p class="kicker">Etapa D · mes 11 a 12</p>
+        <h2>La obra termina. <em>La información queda.</em></h2>
+        <p>As-built, planos récord e inventario de equipos: un gemelo digital para el equipo de mantenimiento.</p>
+        <button class="pill oscuro" data-explorar-hud>Explorar el gemelo en 3D <span>↗</span></button>
+      </div>
+    </div>
+    <aside id="hudObra">
+      <div class="h-mes"><small>Mes</small><b id="hMes">00</b><span>/ 12</span></div>
+      <div class="h-fases" id="hFases"><b>00</b><b>A</b><b>B</b><b>C</b><b>D</b></div>
+      <div class="h-curva">
+        <div class="h-tit"><small>Honorarios acumulados</small><div class="seg mini-seg" id="hModo"><button data-m="ind" class="on">Indep.</button><button data-m="int">Integrada</button></div></div>
+        <canvas id="hudCurva"></canvas>
+        <div class="h-dos"><span><i class="ln a"></i><b id="hInd">$0 M</b></span><span><i class="ln b"></i><b id="hInt">$0 M</b></span></div>
+      </div>
+      <div class="h-cnt"><div><b id="hMep">0</b><small>elementos MEP trazados</small></div><div><b id="hNiv">0</b><small>niveles construidos</small></div></div>
+      <p class="h-fuente">Cronograma y honorarios: Propuesta BACO v03 · sin IVA</p>
+    </aside>

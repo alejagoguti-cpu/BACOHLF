@@ -33,7 +33,7 @@ function titulos() {
 
 /** Contadores que corren al entrar en pantalla. */
 function contadores() {
-  $$('[data-n]').forEach((el) => {
+  $$('#comercial [data-n]').forEach((el) => {
     const fin = parseFloat(el.dataset.n!); const d = +(el.dataset.d || 0); const o = { v: 0 };
     enVista(el, () => gsap.to(o, { v: fin, duration: 1.8, ease: 'power2.out', onUpdate: () => { el.textContent = fmt(o.v, d); } }));
   });
@@ -65,7 +65,7 @@ function cortina() {
 /** 04 · El modelo en datos (real). */
 function datos(d: DatosModelo) {
   // barras: elementos por sistema MEP
-  const barras = $('#gBarras'); barras.innerHTML = '';
+  const barras = $('#gBarras'); if (!barras) return; barras.innerHTML = '';
   const max = Math.max(...d.redes.map((r) => r.elementos));
   d.redes.slice().sort((a, b) => b.elementos - a.elementos).forEach((r) => {
     const fila = document.createElement('button'); fila.className = 'barra';

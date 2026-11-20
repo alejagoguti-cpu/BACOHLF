@@ -9,7 +9,7 @@ p.on('console', (m) => m.type() === 'error' && console.log('CONSOLE', m.text()))
 p.on('pageerror', (e) => console.log('PAGEERR', e.message));
 await p.goto(url, { waitUntil: 'networkidle0' }); await new Promise((r) => setTimeout(r, 9000));
 for (const pr of pts) {
-  await p.evaluate((pr) => { const st = window.scrollMax ?? (document.documentElement.scrollHeight - innerHeight); window.scrollTo(0, pr * (innerHeight * 17)); }, pr);
+  await p.evaluate((pr) => { const st = window.scrollMax ?? (document.documentElement.scrollHeight - innerHeight); window.scrollTo(0, pr * (innerHeight * 20)); }, pr);
   await new Promise((r) => setTimeout(r, 1200));
   await p.screenshot({ path: `tools/cap/p${String(Math.round(pr * 1000)).padStart(4, '0')}.jpg`, quality: 70 });
 }
