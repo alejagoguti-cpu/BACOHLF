@@ -1,25 +1,27 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 // ───────────────────────── datos ─────────────────────────
-interface Cat { nombre: string; vOff: number; vLen: number; tOff: number; tLen: number }
+interface Cat { nombre: string; vOff: number; vLen: number; tOff?: number; tLen?: number; uvOff?: number; uvLen?: number }
 interface NivelInfo { i: number; nombre: string; elev: number; zmin: number; zmax: number; archivo: string; cats: Cat[] }
-interface Manifest { fuente: string; extension: [number, number]; niveles: NivelInfo[] }
+interface Manifest { fuente: string; enu: { e: number; n: number; z: number }; extension: [number, number]; niveles: NivelInfo[] }
 
 type Disc = 'Arquitectura' | 'Estructura';
 const CATS: Record<string, { arq: string; tec: string; disc: Disc; cerr?: boolean; vidrio?: boolean; metal?: number; rough?: number; nombre: string }> = {
-  muros:      { arq: '#ebe5d9', tec: '#f2f2ef', disc: 'Arquitectura', cerr: true, nombre: 'Muros' },
+  muros:      { arq: '#dcae95', tec: '#f2f2ef', disc: 'Arquitectura', cerr: true, nombre: 'Muros' },
   ventanas:   { arq: '#7f98a6', tec: '#e8edf0', disc: 'Arquitectura', cerr: true, vidrio: true, nombre: 'Ventanas' },
   paneles:    { arq: '#d8d2c6', tec: '#eeeeea', disc: 'Arquitectura', cerr: true, nombre: 'Paneles' },
   puertas:    { arq: '#8a5a3b', tec: '#ecebe6', disc: 'Arquitectura', nombre: 'Puertas' },
   montantes:  { arq: '#3a3d41', tec: '#c9ccd0', disc: 'Arquitectura', metal: .6, rough: .4, nombre: 'Montantes' },
   barandas:   { arq: '#3a3d41', tec: '#c9ccd0', disc: 'Arquitectura', metal: .6, rough: .4, nombre: 'Barandas' },
   escaleras:  { arq: '#b4afa5', tec: '#e4e4e0', disc: 'Arquitectura', nombre: 'Escaleras' },
-  cubiertas:  { arq: '#a5563b', tec: '#e9e7e2', disc: 'Arquitectura', cerr: true, nombre: 'Cubiertas' },
+  cubiertas:  { arq: '#ffffff', tec: '#e9e7e2', disc: 'Arquitectura', cerr: true, nombre: 'Cubiertas' },
   losas:      { arq: '#bcb7ae', tec: '#dfe4ea', disc: 'Estructura', nombre: 'Losas' },
   columnas:   { arq: '#c8c3b9', tec: '#cfd8e2', disc: 'Estructura', nombre: 'Columnas' },
   vigas:      { arq: '#c8c3b9', tec: '#cfd8e2', disc: 'Estructura', nombre: 'Vigas' },
@@ -46,16 +48,17 @@ renderer.toneMappingExposure = 1.05;
 renderer.localClippingEnabled = true;
 
 const scene = new THREE.Scene();
-const PAPEL = new THREE.Color('#fbfbfa');
+const PAPEL = new THREE.Color('#f7f4ef');
 scene.background = PAPEL.clone();
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 scene.add(new THREE.HemisphereLight('#fbf7ef', '#9a958c', 0.9));
 const sol = new THREE.DirectionalLight('#fff3df', 2.4);
-sol.position.set(60, 90, 40);
+sol.position.set(70, 110, 50);
 sol.castShadow = true;
 sol.shadow.mapSize.set(2048, 2048);
-Object.assign(sol.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 10, far: 260 });
+Object.assign(sol.shadow.camera, { left: -110, right: 110, top: 110, bottom: -110, near: 10, far: 320 });
+const niebla = new THREE.Fog('#f7f4ef', 280, 1100);
 sol.shadow.bias = -0.0005;
 scene.add(sol);
 const suelo = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), new THREE.ShadowMaterial({ opacity: 0.16 }));
@@ -72,7 +75,7 @@ controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 8; controls.max
 controls.enabled = false;
 
 const corte = new THREE.Plane(new THREE.Vector3(0, -1, 0), 999);
-const ACENTO = new THREE.Color('#b79e66');
+const ACENTO = new THREE.Color('#b59535');
 
 // ───────────────────────── estado ─────────────────────────
 /** Estado visual completo. En el recorrido lo escribe la timeline (scroll); en modo libre, gsap/la UI. */
@@ -89,8 +92,12 @@ const S = {
   sel: -1,       // nivel destacado (los demás se atenúan)
   dimOtros: 0,
   grilla: 0,
+  ctx: 1,        // opacidad del contexto urbano
+  shift: 0,      // corre el encuadre a la derecha cuando hay una tarjeta a la izquierda
 };
 type Estado = typeof S;
+/** Interacciones dentro del recorrido: se suman al estado de la timeline sin romper el scrub. */
+const U = { corteExtra: 0, planoNivel: -1, px: 0, py: 0, tpx: 0, tpy: 0 };
 
 interface Nivel { info: NivelInfo; grupo: THREE.Group; mats: Map<string, THREE.MeshStandardMaterial>; lineas: THREE.LineBasicMaterial; caja: THREE.Box3; destino: number; vis: number; hl: number }
 const niveles: Nivel[] = [];
@@ -100,6 +107,100 @@ let modo: 'cine' | 'libre' = 'cine';
 
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
 const ss = (a: number, b: number, x: number) => { const t = THREE.MathUtils.clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+
+// ───────────────────────── texturas PBR (las mismas del visor HLF) ─────────────────────────
+const texLoader = new THREE.TextureLoader();
+function tex(url: string, metrosPorTile: number, srgb = true) {
+  const t = texLoader.load(url);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(1 / metrosPorTile, 1 / metrosPorTile); // las UV vienen en metros
+  t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+  t.anisotropy = 8;
+  return t;
+}
+const TEX = {
+  // ladrillo a la vista del hotel (foto real): ≈ 5 hiladas por 1,28 m, como en HLF
+  ladrillo: { map: tex('ctx/tex_ladrillo_hlf.webp', 1.28), normal: tex('ctx/tex_ladrillo_hlf_n.webp', 1.28, false) },
+  teja: { map: tex('ctx/tex_teja.webp', 1.5), normal: null as THREE.Texture | null },
+};
+/** Permite pasar de material a representación técnica: uMapa 1 = textura, 0 = color plano. */
+function conMezclaDeMapa(m: THREE.MeshStandardMaterial) {
+  const u = { value: 1 };
+  m.userData.uMapa = u;
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.uMapa = u;
+    sh.fragmentShader = sh.fragmentShader
+      .replace('void main() {', 'uniform float uMapa;\nvoid main() {')
+      .replace('#include <map_fragment>', '#ifdef USE_MAP\n vec4 sampledDiffuseColor = texture2D( map, vMapUv );\n diffuseColor *= mix(vec4(1.0), sampledDiffuseColor, uMapa);\n#endif');
+  };
+}
+
+// ───────────────────────── contexto (terreno, vías, vecinos, resto del hotel) ─────────────────────────
+const ctxGrupo = new THREE.Group(); ctxGrupo.name = 'contexto'; scene.add(ctxGrupo);
+const ctxMats: THREE.MeshStandardMaterial[] = [];
+let hayContexto = false;
+function dentroDe(poly: [number, number][], x: number, y: number) {
+  let r = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) r = !r;
+  }
+  return r;
+}
+async function cargarContexto(enu: Manifest['enu']) {
+  ctxGrupo.position.set(-enu.e, -enu.z, enu.n); // los GLB de HLF están en ENU (x = E, y = cota, z = -N)
+  const { huella } = await (await fetch('ctx/huella.json')).json() as { huella: [number, number][][] };
+  const enHuella = (e: number, n: number) => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => huella.some((p) => dentroDe(p, e + dx, n + dy)));
+  const draco = new DRACOLoader().setDecoderPath('draco/');
+  const loader = new GLTFLoader().setDRACOLoader(draco);
+  const SUELO: Record<string, [string, number]> = {
+    Terreno: ['ctx/tex_prado.webp', 6], Vias: ['ctx/tex_asfalto.webp', 5], Andenes: ['ctx/tex_anden.webp', 2],
+    Separadores: ['ctx/tex_prado.webp', 6], Ciclorrutas: ['ctx/tex_ciclo.webp', 3],
+  };
+  const tiles = ['T01', 'T02', 'T03', 'T10', 'T11', 'T12', 'T13', 'T20', 'T21', 'T22', 'T23', 'T30', 'T31', 'T32'];
+  const archivos = [
+    ...Object.keys(SUELO).map((k) => 'suelo_' + k), 'hotel_plazoleta', 'hotel_fachadas', 'hotel_cubiertas', 'torres_vecinas',
+    ...tiles.map((t) => 'edificios_' + t),
+  ];
+  await Promise.all(archivos.map(async (f) => {
+    let gltf; try { gltf = await loader.loadAsync(`ctx/${f}.glb`); } catch { return; }
+    const recortar = f === 'hotel_fachadas' || f === 'hotel_cubiertas';
+    gltf.scene.traverse((o) => {
+      const mesh = o as THREE.Mesh; if (!mesh.isMesh) return;
+      const g = mesh.geometry as THREE.BufferGeometry;
+      const pos = g.getAttribute('position');
+      // el volumen viejo del hotel se recorta donde ahora está el Revit (misma huella que usa HLF)
+      if (recortar && g.index) {
+        const idx = g.index.array; const keep: number[] = [];
+        for (let t = 0; t < idx.length; t += 3) {
+          let x = 0, z = 0; for (let k = 0; k < 3; k++) { x += pos.getX(idx[t + k]); z += pos.getZ(idx[t + k]); }
+          if (!enHuella(x / 3, -z / 3)) keep.push(idx[t], idx[t + 1], idx[t + 2]);
+        }
+        g.setIndex(keep);
+      }
+      const clave = f.startsWith('suelo_') ? f.slice(6) : '';
+      let m = mesh.material as THREE.MeshStandardMaterial;
+      if (clave) { // suelo sin UV en el GLB: UV planas en metros + foto PBR
+        const uv = new Float32Array(pos.count * 2);
+        for (let i = 0; i < pos.count; i++) { uv[i * 2] = pos.getX(i); uv[i * 2 + 1] = pos.getZ(i); }
+        g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+        const [url, esc] = SUELO[clave];
+        m = new THREE.MeshStandardMaterial({ map: tex(url, esc), roughness: 0.95 });
+        if (clave === 'Vias' || clave === 'Andenes' || clave === 'Ciclorrutas') { m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -2; }
+        mesh.material = m;
+      } else if (f.startsWith('edificios_')) {
+        m = new THREE.MeshStandardMaterial({ color: '#e6e2db', roughness: 0.9, flatShading: true });
+        mesh.material = m;
+      }
+      m.userData.baseOp = m.transparent ? m.opacity : 1;
+      ctxMats.push(m);
+      mesh.receiveShadow = true; mesh.castShadow = !clave && (f.startsWith('hotel') || f === 'torres_vecinas');
+      mesh.raycast = () => {};
+    });
+    ctxGrupo.add(gltf.scene);
+  }));
+  hayContexto = true; suelo.visible = false;
+}
 
 // ───────────────────────── carga ─────────────────────────
 async function cargar() {
@@ -115,16 +216,20 @@ async function cargar() {
       const def = CATS[c.nombre]; if (!def) continue;
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(buf, c.vOff, c.vLen), 3));
-      g.setIndex(new THREE.BufferAttribute(new Uint32Array(buf, c.tOff, c.tLen), 1));
+      if (c.tOff !== undefined) g.setIndex(new THREE.BufferAttribute(new Uint32Array(buf, c.tOff, c.tLen!), 1));
+      if (c.uvOff !== undefined) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(buf, c.uvOff, c.uvLen!), 2));
       g.computeBoundingBox(); caja.union(g.boundingBox!);
+      const pbr = c.nombre === 'muros' ? TEX.ladrillo : c.nombre === 'cubiertas' ? TEX.teja : null;
       const m = new THREE.MeshStandardMaterial({
         color: def.arq, roughness: def.rough ?? (def.vidrio ? 0.08 : 0.88), metalness: def.metal ?? (def.vidrio ? 0.2 : 0),
-        flatShading: true, side: THREE.DoubleSide, transparent: !!def.vidrio, opacity: def.vidrio ? 0.5 : 1, clippingPlanes: [corte],
+        flatShading: !pbr, side: THREE.DoubleSide, transparent: !!def.vidrio, opacity: def.vidrio ? 0.5 : 1, clippingPlanes: [corte],
+        map: pbr?.map ?? null, normalMap: pbr?.normal ?? null,
       });
-      m.userData = { def };
+      if (pbr) { g.computeVertexNormals(); conMezclaDeMapa(m); }
+      m.userData = { ...m.userData, def };
       const mesh = new THREE.Mesh(g, m);
       mesh.castShadow = !def.vidrio; mesh.receiveShadow = true;
-      mesh.userData = { nivel: niveles.length, cat: c.nombre, tris: c.tLen / 3 };
+      mesh.userData = { nivel: niveles.length, cat: c.nombre, tris: (c.tLen ?? c.vLen / 3) / 3 };
       mesh.name = c.nombre;
       grupo.add(mesh);
       const ed = new THREE.LineSegments(new THREE.EdgesGeometry(g, 28), lineas);
@@ -164,15 +269,19 @@ function aplicar(st: Estado) {
       m.opacity = op; m.transparent = op < 0.999; m.depthWrite = op > 0.6;
       m.emissive.copy(ACENTO).multiplyScalar(0.35 * n.hl);
       m.visible = catsVisibles.has(cat);
+      if (m.userData.uMapa) { m.userData.uMapa.value = 1 - st.bim; m.normalScale.setScalar(1 - st.bim); }
     }
     n.lineas.opacity = st.bordes * n.vis;
-    n.lineas.color.set('#8f9daa').lerp(new THREE.Color('#2f3a45'), st.tinta);
+    n.lineas.color.set('#6a7d99').lerp(new THREE.Color('#0e3064'), st.tinta);
     n.grupo.children.forEach((o) => { if ((o as THREE.LineSegments).isLineSegments) o.visible = st.bordes > 0.01 && catsVisibles.has(o.userData.cat); });
   });
   corte.constant = st.corteY;
   (grilla.material as THREE.Material).opacity = 0.6 * st.grilla;
   (suelo.material as THREE.ShadowMaterial).opacity = 0.16 * (1 - st.orto) * (1 - st.bim * 0.6);
   sol.intensity = THREE.MathUtils.lerp(2.4, 1.2, st.bim);
+  ctxGrupo.visible = st.ctx > 0.01;
+  for (const m of ctxMats) { const op = m.userData.baseOp * st.ctx; m.opacity = op; m.transparent = op < 0.999; m.depthWrite = op > 0.5; }
+  scene.fog = hayContexto && st.orto < 0.05 ? niebla : null;
 }
 
 const objetivo = new THREE.Vector3();
@@ -187,6 +296,7 @@ function camaraDesde(st: Estado) {
   camera.fov = fov; camera.near = Math.max(0.5, d * 0.02); camera.far = d * 6 + 400;
   camera.updateProjectionMatrix();
   camera.lookAt(objetivo);
+  if (st.shift > 0.001) camera.setViewOffset(innerWidth, innerHeight, -innerWidth * st.shift, 0, innerWidth, innerHeight); else camera.clearViewOffset();
 }
 
 // ───────────────────────── etiquetas 3D ─────────────────────────
@@ -226,12 +336,23 @@ function construirRecorrido() {
   T({ dist: 84 }, 0, 2.5);
   T({ az: -38 }, 2.5, 3.5);
   T({ el: 38, dist: 112, ty: 6 }, 6, 4);
-  tl.to('.titulo', { xPercent: -38, opacity: 0.25, duration: 3.5 }, 2.5);
+  tl.to('.titulo .w', { yPercent: -70, opacity: 0, stagger: 0.5, duration: 3 }, 3);
+  tl.to('.hero-der', { y: -60, opacity: 0, duration: 2.5 }, 2.5);
+  tl.to('#velo', { opacity: 0, duration: 4 }, 4);
+  const total = new THREE.Box3(); niveles.forEach((n) => total.union(n.caja));
+  const cnt = { niveles: 0, altura: 0, cats: 0 };
+  const nCats = new Set(niveles.flatMap((n) => [...n.mats.keys()])).size;
+  const pintarCnt = () => {
+    document.querySelector('[data-cnt="niveles"]')!.textContent = String(Math.round(cnt.niveles));
+    document.querySelector('[data-cnt="altura"]')!.textContent = cnt.altura.toFixed(1).replace('.', ',');
+    document.querySelector('[data-cnt="cats"]')!.textContent = String(Math.round(cnt.cats));
+  };
+  tl.to(cnt, { niveles: niveles.length, altura: total.max.y, cats: nCats, duration: 3, ease: 'power2.out', onUpdate: pintarCnt }, 10.6);
 
   // 02 · Vista aérea oblicua + órbita parcial; etiquetas ancladas
   T({ el: 58, dist: 150, az: -10, ty: 4 }, 10, 4);
   T({ az: 52 }, 14, 6);
-  T({ grilla: 1 }, 10, 3);
+  T({ grilla: 0, shift: 0.14 }, 10, 3);
 
   // 03 · Explosión arquitectónica (axonometría)
   T({ az: 45, el: 30, dist: 165, ty: 22 }, 20, 3);
@@ -247,26 +368,30 @@ function construirRecorrido() {
   // 05 · Arquitectura → BIM
   T({ verHasta: 9, corteY: 999, ty: 9 }, 40, 2);
   T({ az: 45, el: 28, dist: 130 }, 40, 3);
-  T({ bim: 1, bordes: 0.55 }, 43, 3);
+  T({ bim: 1, bordes: 0.55, ctx: 0.3 }, 43, 3);
   T({ cerr: 1 }, 46, 2);
   T({ az: 70 }, 46, 4);
 
   // 06 · Del edificio al plano
   T({ verHasta: nivelP2, corteY: cut, cerr: 0, ty: elevP2 }, 50, 2);
   T({ az: 0, el: 89.5, dist: 105, tx: 0, tz: 0 }, 50, 5);
-  T({ bordes: 1, tinta: 1, grilla: 0 }, 52, 4);
+  T({ bordes: 1, tinta: 1, grilla: 0, ctx: 0 }, 52, 4);
   T({ orto: 1 }, 53, 5);
 
   // 07 · Remodelación — vuelve a la representación realista
-  T({ orto: 0, bim: 0, bordes: 0, tinta: 0, verHasta: 9, corteY: 999 }, 60, 3);
+  T({ orto: 0, bim: 0, bordes: 0, tinta: 0, verHasta: 9, corteY: 999, ctx: 1 }, 60, 3);
   T({ az: 70, el: 20, dist: 120, ty: 9 }, 60, 4);
   T({ az: 105 }, 64, 6);
 
   // 08 · Ruta BACO
-  T({ az: 140, el: 24, dist: 135 }, 70, 10);
+  T({ shift: 0.24 }, 70, 2);
+  T({ az: 20, el: 30, dist: 150, ty: 9 }, 70, 10);
+
+  // 09 · Inversión: el edificio gira despacio detrás del simulador
+  T({ az: -40, el: 42, dist: 190, ty: 10 }, 80, 10);
 
   // textos por escena
-  const N = 8;
+  const N = 9;
   for (let e = 1; e <= N; e++) {
     const el = `.escena[data-e="${e}"]`, a = (e - 1) * ESC;
     if (e === 1) gsap.set(el, { autoAlpha: 1 });
@@ -276,15 +401,17 @@ function construirRecorrido() {
   tl.set({}, {}, N * ESC);
 
   // marcas de progreso
-  const nombres = ['Emerge', 'Edificación', 'Explosión', 'Interior', 'BIM', 'Plano', 'Remodelación', 'Ruta BACO'];
+  const nombres = ['Inicio', 'Edificio', 'Niveles', 'Interior', 'BIM', 'Plano', 'Remodelación', 'Ruta', 'Inversión'];
   $('#marcas').innerHTML = nombres.map((n, i) => `<li style="top:${(i / N) * 100}%">${String(i + 1).padStart(2, '0')} ${n}</li>`).join('');
 
   st = ScrollTrigger.create({
-    trigger: '#escenario', start: 'top top', end: () => '+=' + innerHeight * 14,
+    trigger: '#escenario', start: 'top top', end: () => '+=' + innerHeight * 17,
     pin: true, anticipatePin: 1, scrub: true, invalidateOnRefresh: true, animation: tl,
     onUpdate: (self) => {
       ($('#progreso i')).style.height = (self.progress * 100) + '%';
-      escenaActual = Math.min(N, Math.floor(self.progress * N) + 1);
+      const e = Math.min(N, Math.floor(self.progress * N) + 1);
+      if (e !== escenaActual) document.querySelectorAll('#marcas li').forEach((li, i) => li.classList.toggle('on', i === e - 1));
+      escenaActual = e;
     },
   });
 }
@@ -301,6 +428,7 @@ function entrarLibre(focoNivel?: number) {
   document.querySelectorAll('.modos button').forEach((b) => b.classList.toggle('on', (b as HTMLElement).dataset.modo === 'libre'));
   scrollGuardado = scrollY; st.disable(false);
   document.documentElement.style.overflow = 'hidden';
+  camera.clearViewOffset(); S.shift = 0;
   controls.target.copy(objetivo); controls.enabled = true; controls.update();
   gsap.to(S, { orto: 0, duration: 0.8 });
   $('#volver').hidden = false;
@@ -345,8 +473,8 @@ function vista(v: string) {
     gsap.to(S, { orto: 0, verHasta: 9, corteY: 999, duration: 1.2 });
     volar(new THREE.Vector3(85, 60, 95), new THREE.Vector3(0, 9, 0));
   }
-  if (v === 'arq') gsap.to(S, { bim: 0, cerr: 0, bordes: 0, tinta: 0, duration: 1 });
-  if (v === 'bim') gsap.to(S, { bim: 1, cerr: 1, bordes: 0.55, tinta: 0, duration: 1 });
+  if (v === 'arq') gsap.to(S, { bim: 0, cerr: 0, bordes: 0, tinta: 0, ctx: 1, duration: 1 });
+  if (v === 'bim') gsap.to(S, { bim: 1, cerr: 1, bordes: 0.55, tinta: 0, ctx: 0.3, duration: 1 });
   if (v === 'explotar') {
     const abrir = S.explode < 0.5;
     gsap.to(S, { explode: abrir ? 1 : 0, verHasta: 9, corteY: 999, duration: 2, ease: 'power1.inOut' });
@@ -355,7 +483,7 @@ function vista(v: string) {
   if (v === 'plano') {
     const i = nivelSel >= 0 ? nivelSel : niveles.findIndex((n) => n.info.nombre === 'PISO 2');
     const elev = niveles[i].info.elev; nivelSel = i;
-    gsap.to(S, { explode: 0, bim: 1, cerr: 0, bordes: 1, tinta: 1, verHasta: i, corteY: elev + 1.6, sel: -1, dimOtros: 0, orto: 1, duration: 1.6 });
+    gsap.to(S, { explode: 0, bim: 1, cerr: 0, bordes: 1, tinta: 1, verHasta: i, corteY: elev + 1.6, sel: -1, dimOtros: 0, orto: 1, ctx: 0, duration: 1.6 });
     // FOV 5° (casi ortográfica): distancia para encuadrar ~90 m de planta
     const d = 45 / Math.tan(THREE.MathUtils.degToRad(2.5));
     volar(new THREE.Vector3(0, elev + d, 0.01), new THREE.Vector3(0, elev, 0), 1.6);
@@ -434,9 +562,86 @@ function ui() {
     const c = li.dataset.c; catsVisibles.has(c) ? catsVisibles.delete(c) : catsVisibles.add(c); pintarPanel();
   });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && modo === 'libre') salirLibre(); });
-  $('#etapas').innerHTML = ETAPAS.map(([k, t, d]) => `<div class="etapa"><b>${k}</b><strong>${t}</strong><span>${d}</span></div>`).join('');
-  $('#notaMep').textContent = 'Redes MEP (eléctrica, hidrosanitaria, RCI): están modeladas en 1001_Hotel_la_fotona_redes.rvt y se incorporarán al exportarlas. Aquí no se simulan.';
+  landing();
   $('#notaRemodel').textContent = 'La comparación con clipping necesita dos modelos: el de condiciones existentes (LOD 300, a cargo del proveedor de escaneo según la propuesta) y el de remodelación. Por ahora solo está cargado el modelo de remodelación HLF_P2-P6.';
+}
+
+// ───────────────────────── landing: interacciones dentro del recorrido ─────────────────────────
+/** Entregables y honorarios por etapa: Propuesta comercial BACO Studio v03 (9 nov 2026). */
+const DET: Record<string, string> = {
+  '00': '<b>Proveedor de escaneo</b> (contratado por el propietario): levantamiento 3D y modelo de condiciones existentes LOD 300. BACO revisa coordenadas, consistencia y zonas no verificadas.',
+  A: '<b>$33 M</b> · BEP marco y operativo, EIR/AIR, protocolo CDE, matriz LOD 400, anexos y evaluación BIM de proponentes.',
+  B: '<b>$47 M</b> · Modelo federado por hito, reportes de interferencias, minutas y registro de incidencias.',
+  C: '<b>$184 M</b> independiente · <b>$110,4 M</b> con equipo de construcción BACO · Informes BIM mensuales, control de versiones, registro de RFI y cambios.',
+  D: '<b>$31 M</b> · Federado as-built, planos récord por especialidad, inventario de equipos y paquete de activos digitales.',
+};
+function irAEscena(e: number) {
+  const N = 9; const y = st.start + (st.end - st.start) * ((e - 1 + 0.55) / N);
+  window.scrollTo({ top: y, behavior: 'smooth' });
+}
+function landing() {
+  addEventListener('pointermove', (ev) => { if (modo === 'cine') { U.tpx = ev.clientX / innerWidth - 0.5; U.tpy = ev.clientY / innerHeight - 0.5; } });
+  document.querySelectorAll<HTMLElement>('[data-ir]').forEach((b) => b.addEventListener('click', () => irAEscena(+b.dataset.ir!)));
+  $('#marcas').addEventListener('click', (e) => { const li = (e.target as HTMLElement).closest('li'); if (li) irAEscena([...li.parentElement!.children].indexOf(li) + 1); });
+  // 03 · niveles
+  $('#chipsNiveles').innerHTML = niveles.map((n, i) => `<button class="chip" data-n="${i}">${n.info.nombre}</button>`).join('');
+  $('#chipsNiveles').addEventListener('mouseover', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (b) S.sel = +b.dataset.n!; });
+  $('#chipsNiveles').addEventListener('mouseleave', () => { S.sel = -1; });
+  $('#chipsNiveles').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (b) entrarLibre(+b.dataset.n!); });
+  // 04 · altura de corte
+  const rc = $<HTMLInputElement>('#rCorte');
+  rc.addEventListener('input', () => { const v = +rc.value; U.corteExtra = v - 1.6; $('#vCorte').textContent = v.toFixed(2).replace('.', ',') + ' m'; });
+  // 05 · disciplinas
+  const pintarDisc = () => {
+    $('#chipsDisc').innerHTML = (['Arquitectura', 'Estructura'] as Disc[]).map((d) => {
+      const on = Object.entries(CATS).some(([c, v]) => v.disc === d && catsVisibles.has(c));
+      return `<button class="chip ${on ? 'on' : ''}" data-d="${d}">${d}</button>`;
+    }).join('') + MEP.map((m) => `<button class="chip" disabled title="Modelado en 1001_Hotel_la_fotona_redes.rvt; falta exportarlo a la web">${m.split(' (')[0]}<small>pendiente</small></button>`).join('');
+  };
+  pintarDisc();
+  $('#chipsDisc').addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b?.dataset.d) return;
+    const cats = Object.entries(CATS).filter(([, v]) => v.disc === b.dataset.d).map(([c]) => c);
+    const on = cats.some((c) => catsVisibles.has(c));
+    cats.forEach((c) => on ? catsVisibles.delete(c) : catsVisibles.add(c));
+    pintarDisc();
+  });
+  // 06 · planta por nivel
+  const conPlanta = niveles.map((n, i) => ({ n, i })).filter(({ n }) => n.mats.has('muros') && n.info.nombre !== 'PISO 1');
+  const p2 = niveles.findIndex((n) => n.info.nombre === 'PISO 2');
+  const pintarPlano = () => { $('#chipsPlano').innerHTML = conPlanta.map(({ n, i }) => `<button class="chip ${(U.planoNivel < 0 ? p2 : U.planoNivel) === i ? 'on' : ''}" data-n="${i}">${n.info.nombre}</button>`).join(''); };
+  pintarPlano();
+  $('#chipsPlano').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b) return; U.planoNivel = +b.dataset.n!; pintarPlano(); });
+  // 08 · etapas
+  const pintarEtapa = (k: string) => {
+    document.querySelectorAll('.etapa').forEach((el) => el.classList.toggle('on', (el as HTMLElement).dataset.k === k));
+    const det = $('#etapaDet'); det.innerHTML = DET[k];
+    gsap.fromTo(det, { opacity: 0, x: -12 }, { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out' });
+  };
+  $('#etapas').innerHTML = ETAPAS.map(([k, t, d]) => `<button class="etapa" data-k="${k}"><b>${k}</b><strong>${t}</strong><span>${d}</span></button>`).join('');
+  $('#etapas').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.etapa'); if (b) pintarEtapa(b.dataset.k!); });
+  pintarEtapa('A');
+  // 09 · simulador (fórmula de la propuesta)
+  let integrada = false;
+  const M = (v: number) => '$' + v.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' M';
+  const vis = { total: 0, iva: 0, eq: 0 };
+  const calc = () => {
+    const meses = +$<HTMLInputElement>('#rMeses').value, obra = +$<HTMLInputElement>('#rObra').value;
+    $('#vMeses').textContent = meses + ' meses'; $('#vObra').textContent = '$' + obra.toLocaleString('es-CO') + ' M';
+    const total = 111 + meses * (integrada ? 13.8 : 23);
+    gsap.to(vis, { total, iva: total * 1.19, eq: (100 * total) / obra, duration: 0.6, ease: 'power2.out', onUpdate: () => {
+      $('#oTotal').textContent = M(Math.round(vis.total * 10) / 10);
+      $('#oIva').textContent = M(Math.round(vis.iva * 10) / 10);
+      $('#oEq').textContent = vis.eq.toFixed(2).replace('.', ',') + ' %';
+    } });
+  };
+  $('#rMeses').addEventListener('input', calc); $('#rObra').addEventListener('input', calc);
+  $('#segModo').addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('button'); if (!b) return;
+    integrada = b.dataset.m === 'int';
+    document.querySelectorAll('#segModo button').forEach((x) => x.classList.toggle('on', x === b)); calc();
+  });
+  calc();
 }
 
 // ───────────────────────── bucle ─────────────────────────
@@ -446,8 +651,15 @@ function resize() {
 }
 addEventListener('resize', resize);
 function frame() {
-  aplicar(S);
-  if (modo === 'cine') camaraDesde(S);
+  const E = { ...S };
+  if (modo === 'cine') {
+    if (E.corteY < 500) E.corteY += U.corteExtra;
+    if (escenaActual === 6 && U.planoNivel >= 0) { const n = niveles[U.planoNivel]; E.verHasta = U.planoNivel; E.corteY = n.info.elev + 1.6; E.ty = n.info.elev; }
+    U.px += (U.tpx - U.px) * 0.05; U.py += (U.tpy - U.py) * 0.05;
+    E.az += U.px * 7 * (1 - E.orto); E.el = THREE.MathUtils.clamp(E.el - U.py * 3 * (1 - E.orto), 2, 89.6);
+  }
+  aplicar(E);
+  if (modo === 'cine') camaraDesde(E);
   else { controls.update(); camera.fov = THREE.MathUtils.lerp(35, 5, S.orto); camera.near = 0.5 + 20 * S.orto; camera.far = 4000; camera.updateProjectionMatrix(); }
   actualizarEtiquetas();
   renderer.render(scene, camera);
@@ -455,11 +667,12 @@ function frame() {
 }
 
 (async () => {
-  await cargar();
+  const man = await cargar();
+  cargarContexto(man.enu).catch((e) => console.warn('contexto', e));
   ui();
   // etiquetas: edificio (escena 02) y niveles (escena 03 / exploración)
   const total = new THREE.Box3(); niveles.forEach((n) => total.union(n.caja));
-  etiqueta('HLF P2–P6 · modelo Revit', () => new THREE.Vector3(0, total.max.y + 2, 0),
+  etiqueta('Torre Suites · ver en 3D', () => new THREE.Vector3(0, total.max.y + 2, 0),
     () => modo === 'cine' && escenaActual === 2 ? 1 : 0, () => entrarLibre());
   niveles.forEach((n, i) => etiqueta(n.info.nombre, () => new THREE.Vector3(n.caja.max.x, n.info.elev + n.grupo.position.y + 1.5, n.caja.getCenter(pv).z),
     () => (modo === 'cine' && escenaActual === 3 ? ss(0.6, 0.9, S.explode) : 0) || (modo === 'libre' && S.explode > 0.6 ? n.vis : 0),
@@ -467,5 +680,7 @@ function frame() {
   construirRecorrido();
   pintarPanel();
   $('#cargando').classList.add('fin');
+  gsap.from('.titulo .w', { yPercent: 110, opacity: 0, stagger: 0.14, duration: 1.4, ease: 'power3.out', delay: 0.3 });
+  gsap.from('.hero-der', { y: 30, opacity: 0, duration: 1.2, ease: 'power3.out', delay: 0.8 });
   frame();
 })();

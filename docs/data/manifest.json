@@ -1,19 +1,20 @@
 {
  "fuente": "HLF_P2-P6.rvt (export por nivel)",
- "origen": [
-  18.073,
-  320.31
- ],
+ "enu": {
+  "e": -214.09217169557732,
+  "n": 270.9238323147715,
+  "z": 4.2
+ },
  "extension": [
-  76.63,
-  67.596
+  80.81588064847045,
+  54.982668049968964
  ],
  "niveles": [
   {
    "i": 0,
    "nombre": "PISO 1",
    "elev": 0,
-   "zmin": -1.202,
+   "zmin": -1.158,
    "zmax": 21,
    "archivo": "nivel_0.bin",
    "cats": [
@@ -27,50 +28,43 @@
     {
      "nombre": "muros",
      "vOff": 38016,
-     "vLen": 9180,
-     "tOff": 74736,
-     "tLen": 5814
+     "vLen": 17442,
+     "uvOff": 107784,
+     "uvLen": 11628
     },
     {
      "nombre": "paneles",
-     "vOff": 97992,
+     "vOff": 154296,
      "vLen": 1008,
-     "tOff": 102024,
+     "tOff": 158328,
      "tLen": 504
     },
     {
      "nombre": "escaleras",
-     "vOff": 104040,
+     "vOff": 160344,
      "vLen": 2880,
-     "tOff": 115560,
+     "tOff": 171864,
      "tLen": 1464
     },
     {
      "nombre": "ventanas",
-     "vOff": 121416,
+     "vOff": 177720,
      "vLen": 20088,
-     "tOff": 201768,
+     "tOff": 258072,
      "tLen": 10044
     },
     {
-     "nombre": "losas",
-     "vOff": 241944,
-     "vLen": 2412,
-     "tOff": 251592,
-     "tLen": 1320
-    },
-    {
      "nombre": "montantes",
-     "vOff": 256872,
+     "vOff": 298248,
      "vLen": 2088,
-     "tOff": 265224,
+     "tOff": 306600,
      "tLen": 1044
     },
     {
      "nombre": "columnas",
-     "vOff": 269400,
+     "vOff": 310776,
      "vLen": 2376,
-     "tOff": 278904,
+     "tOff": 320280,
      "tLen": 1188
     }
    ]
@@ -93,72 +87,72 @@
     {
      "nombre": "muros",
      "vOff": 57024,
-     "vLen": 75450,
-     "tOff": 358824,
-     "tLen": 40830
+     "vLen": 122490,
+     "uvOff": 546984,
+     "uvLen": 81660
     },
     {
      "nombre": "paneles",
-     "vOff": 522144,
+     "vOff": 873624,
      "vLen": 1008,
-     "tOff": 526176,
+     "tOff": 877656,
      "tLen": 504
     },
     {
      "nombre": "escaleras",
-     "vOff": 528192,
+     "vOff": 879672,
      "vLen": 2970,
-     "tOff": 540072,
+     "tOff": 891552,
      "tLen": 1512
     },
     {
      "nombre": "vigas",
-     "vOff": 546120,
+     "vOff": 897600,
      "vLen": 5442,
-     "tOff": 567888,
+     "tOff": 919368,
      "tLen": 3780
     },
     {
      "nombre": "ventanas",
-     "vOff": 583008,
+     "vOff": 934488,
      "vLen": 58104,
-     "tOff": 815424,
+     "tOff": 1166904,
      "tLen": 29052
     },
     {
      "nombre": "puertas",
-     "vOff": 931632,
+     "vOff": 1283112,
      "vLen": 38700,
-     "tOff": 1086432,
+     "tOff": 1437912,
      "tLen": 30600
     },
     {
      "nombre": "losas",
-     "vOff": 1208832,
+     "vOff": 1560312,
      "vLen": 27306,
-     "tOff": 1318056,
+     "tOff": 1669536,
      "tLen": 16164
     },
     {
      "nombre": "montantes",
-     "vOff": 1382712,
+     "vOff": 1734192,
      "vLen": 2592,
-     "tOff": 1393080,
+     "tOff": 1744560,
      "tLen": 1296
     },
     {
      "nombre": "columnas",
-     "vOff": 1398264,
+     "vOff": 1749744,
      "vLen": 2904,
-     "tOff": 1409880,
+     "tOff": 1761360,
      "tLen": 1500
     },
     {
      "nombre": "cubiertas",
-     "vOff": 1415880,
-     "vLen": 3936,
-     "tOff": 1431624,
-     "tLen": 2928
+     "vOff": 1767360,
+     "vLen": 8784,
+     "uvOff": 1802496,
+     "uvLen": 5856
     }
    ]
   },
@@ -180,50 +174,50 @@
     {
      "nombre": "muros",
      "vOff": 85968,
-     "vLen": 20772,
-     "tOff": 169056,
-     "tLen": 12960
+     "vLen": 38880,
+     "uvOff": 241488,
+     "uvLen": 25920
     },
     {
      "nombre": "paneles",
-     "vOff": 220896,
+     "vOff": 345168,
      "vLen": 1008,
-     "tOff": 224928,
+     "tOff": 349200,
      "tLen": 504
     },
     {
      "nombre": "escaleras",
-     "vOff": 226944,
+     "vOff": 351216,
      "vLen": 5724,
-     "tOff": 249840,
+     "tOff": 374112,
      "tLen": 2892
     },
     {
      "nombre": "ventanas",
-     "vOff": 261408,
+     "vOff": 385680,
      "vLen": 55152,
-     "tOff": 482016,
+     "tOff": 606288,
      "tLen": 27576
     },
     {
      "nombre": "losas",
-     "vOff": 592320,
+     "vOff": 716592,
      "vLen": 1512,
-     "tOff": 598368,
+     "tOff": 722640,
      "tLen": 972
     },
     {
      "nombre": "montantes",
-     "vOff": 602256,
+     "vOff": 726528,
      "vLen": 2592,
-     "tOff": 612624,
+     "tOff": 736896,
      "tLen": 1296
     },
     {
      "nombre": "columnas",
-     "vOff": 617808,
+     "vOff": 742080,
      "vLen": 1800,
-     "tOff": 625008,
+     "tOff": 749280,
      "tLen": 900
     }
    ]
@@ -246,50 +240,50 @@
     {
      "nombre": "muros",
      "vOff": 85968,
-     "vLen": 12078,
-     "tOff": 134280,
-     "tLen": 6492
+     "vLen": 19476,
+     "uvOff": 163872,
+     "uvLen": 12984
     },
     {
      "nombre": "paneles",
-     "vOff": 160248,
+     "vOff": 215808,
      "vLen": 1008,
-     "tOff": 164280,
+     "tOff": 219840,
      "tLen": 504
     },
     {
      "nombre": "escaleras",
-     "vOff": 166296,
+     "vOff": 221856,
      "vLen": 5724,
-     "tOff": 189192,
+     "tOff": 244752,
      "tLen": 2892
     },
     {
      "nombre": "ventanas",
-     "vOff": 200760,
+     "vOff": 256320,
      "vLen": 55152,
-     "tOff": 421368,
+     "tOff": 476928,
      "tLen": 27576
     },
     {
      "nombre": "losas",
-     "vOff": 531672,
+     "vOff": 587232,
      "vLen": 1404,
-     "tOff": 537288,
+     "tOff": 592848,
      "tLen": 912
     },
     {
      "nombre": "montantes",
-     "vOff": 540936,
+     "vOff": 596496,
      "vLen": 2592,
-     "tOff": 551304,
+     "tOff": 606864,
      "tLen": 1296
     },
     {
      "nombre": "columnas",
-     "vOff": 556488,
+     "vOff": 612048,
      "vLen": 1800,
-     "tOff": 563688,
+     "tOff": 619248,
      "tLen": 900
     }
    ]
@@ -312,43 +306,43 @@
     {
      "nombre": "muros",
      "vOff": 103920,
-     "vLen": 14874,
-     "tOff": 163416,
-     "tLen": 8712
+     "vLen": 26136,
+     "uvOff": 208464,
+     "uvLen": 17424
     },
     {
      "nombre": "escaleras",
-     "vOff": 198264,
+     "vOff": 278160,
      "vLen": 5724,
-     "tOff": 221160,
+     "tOff": 301056,
      "tLen": 2892
     },
     {
      "nombre": "ventanas",
-     "vOff": 232728,
+     "vOff": 312624,
      "vLen": 60624,
-     "tOff": 475224,
+     "tOff": 555120,
      "tLen": 30312
     },
     {
      "nombre": "losas",
-     "vOff": 596472,
+     "vOff": 676368,
      "vLen": 1242,
-     "tOff": 601440,
+     "tOff": 681336,
      "tLen": 816
     },
     {
      "nombre": "montantes",
-     "vOff": 604704,
+     "vOff": 684600,
      "vLen": 504,
-     "tOff": 606720,
+     "tOff": 686616,
      "tLen": 252
     },
     {
      "nombre": "columnas",
-     "vOff": 607728,
+     "vOff": 687624,
      "vLen": 1584,
-     "tOff": 614064,
+     "tOff": 693960,
      "tLen": 792
     }
    ]
@@ -364,44 +358,44 @@
     {
      "nombre": "muros",
      "vOff": 0,
-     "vLen": 8772,
-     "tOff": 35088,
-     "tLen": 4740
+     "vLen": 14220,
+     "uvOff": 56880,
+     "uvLen": 9480
     },
     {
      "nombre": "paneles",
-     "vOff": 54048,
+     "vOff": 94800,
      "vLen": 20304,
-     "tOff": 135264,
+     "tOff": 176016,
      "tLen": 10152
     },
     {
      "nombre": "losas",
-     "vOff": 175872,
+     "vOff": 216624,
      "vLen": 1260,
-     "tOff": 180912,
+     "tOff": 221664,
      "tLen": 828
     },
     {
      "nombre": "montantes",
-     "vOff": 184224,
+     "vOff": 224976,
      "vLen": 40824,
-     "tOff": 347520,
+     "tOff": 388272,
      "tLen": 20412
     },
     {
      "nombre": "columnas",
-     "vOff": 429168,
+     "vOff": 469920,
      "vLen": 1368,
-     "tOff": 434640,
+     "tOff": 475392,
      "tLen": 684
     },
     {
      "nombre": "cubiertas",
-     "vOff": 437376,
-     "vLen": 192,
-     "tOff": 438144,
-     "tLen": 108
+     "vOff": 478128,
+     "vLen": 324,
+     "uvOff": 479424,
+     "uvLen": 216
     }
    ]
   },
@@ -430,9 +424,9 @@
     {
      "nombre": "cubiertas",
      "vOff": 63144,
-     "vLen": 540,
-     "tOff": 65304,
-     "tLen": 252
+     "vLen": 756,
+     "uvOff": 66168,
+     "uvLen": 504
     }
    ]
   }

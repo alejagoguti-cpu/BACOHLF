@@ -3,71 +3,110 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>BACO Studio · BIM Experience</title>
+<title>Torre Suites · BIM Experience · Estelar La Fontana</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;200;300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <script type="module" crossorigin src="./assets/index-FEDP4jSG.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-QK4KwH9j.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@200;300;400&family=Space+Grotesk:wght@300;400;500&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script type="module" crossorigin src="./assets/index-DrRqAE0O.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BFo4BqkQ.css">
 </head>
 <body data-modo="cine">
 <canvas id="gl"></canvas>
+<div id="velo"></div>
 <div id="etiquetas"></div>
 
 <header id="barra">
-  <div class="marca"><b>BACO</b> / STUDIO <span>Propuesta para la remodelación Torre Suites · Hotel Estelar La Fontana</span></div>
+  <div class="izq">Torre Suites <span>BIM Experience</span></div>
+  <a class="logos" href="#" aria-label="Inicio">
+    <img src="./logos/estelar.png" alt="Estelar" />
+    <i></i>
+    <img src="./logos/baco.png" alt="Baco Studio" class="baco" />
+  </a>
   <nav class="modos">
     <button data-modo="cine" class="on">Recorrido</button>
-    <button data-modo="libre">Exploración libre</button>
+    <button data-modo="libre">Explorar 3D</button>
   </nav>
 </header>
 
-<!-- MODO A: recorrido controlado por scroll -->
+<!-- MODO A: landing; el scroll mueve la cámara y transforma el edificio -->
 <div id="recorrido">
   <section id="escenario">
     <div class="hud">
-      <div class="escena" data-e="1">
-        <p class="kicker">01 · El hotel emerge</p>
-        <h1 class="titulo">TORRE <b>SUITES</b></h1>
-        <p class="bajada">BIM Experience</p>
-        <hr class="filete" />
-        <div class="cifras"><span><b>7</b>NIVELES<br />DEL MODELO</span><span><b>11</b>CATEGORÍAS<br />BIM</span></div>
-        <p class="sub">Un recorrido por la remodelación, piso a piso, sobre el modelo de Revit HLF_P2-P6.</p>
+      <div class="escena hero" data-e="1">
+        <h1 class="titulo"><span class="w">Torre</span> <span class="w">Suites</span></h1>
+        <div class="hero-der">
+          <p>La remodelación de la torre, piso a piso, sobre el modelo BIM real del hotel. Desplázate para recorrerla.</p>
+          <button class="pill" data-ir="3">Explorar el proyecto <span>↗</span></button>
+        </div>
       </div>
-      <div class="escena" data-e="2">
-        <p class="kicker">02 · Reconocer la edificación</p>
-        <h2>Una sola fuente coordinada</h2>
-        <p>Haz clic sobre el edificio para centrarlo y ver sus niveles.</p>
+
+      <div class="escena tarjeta" data-e="2">
+        <p class="kicker">02</p>
+        <h2>Un solo modelo, <em>todo el edificio</em></h2>
+        <div class="cifras">
+          <div><small>Niveles</small><b data-cnt="niveles">0</b></div>
+          <div><small>Altura</small><b><span data-cnt="altura">0</span> m</b></div>
+          <div><small>Elementos</small><b data-cnt="cats">0</b><small>categorías BIM</small></div>
+        </div>
+        <p>Haz clic sobre la torre para abrirla en 3D.</p>
       </div>
-      <div class="escena" data-e="3">
-        <p class="kicker">03 · Explosión arquitectónica</p>
-        <h2>Nivel por nivel</h2>
-        <p>Cada piso es un grupo independiente del modelo. Haz clic en una planta para explorarla.</p>
+
+      <div class="escena tarjeta" data-e="3">
+        <p class="kicker">03</p>
+        <h2>Nivel por <em>nivel</em></h2>
+        <p>Cada piso es un grupo independiente del modelo. Pasa el cursor para resaltarlo y elige uno para entrar.</p>
+        <div class="chips" id="chipsNiveles"></div>
       </div>
-      <div class="escena" data-e="4">
-        <p class="kicker">04 · Entrar al edificio</p>
-        <h2>Piso 2</h2>
-        <p>Corte a 1,60 m sobre el nivel. Las plantas superiores se retiran para ver el interior.</p>
+
+      <div class="escena tarjeta" data-e="4">
+        <p class="kicker">04</p>
+        <h2>Entrar al <em>Piso 2</em></h2>
+        <p>Las plantas superiores se retiran. Ajusta la altura del corte para ver muros, vanos y puertas.</p>
+        <label class="rango"><span>Altura de corte</span><input type="range" id="rCorte" min="0.6" max="2.8" step="0.05" value="1.6" /><b id="vCorte">1,60 m</b></label>
       </div>
-      <div class="escena" data-e="5">
-        <p class="kicker">05 · Arquitectura → BIM</p>
-        <h2>Del material al dato</h2>
-        <p>Los cerramientos se vuelven transparentes y queda la estructura de información.</p>
-        <p class="nota" id="notaMep"></p>
+
+      <div class="escena tarjeta" data-e="5">
+        <p class="kicker">05</p>
+        <h2>Del material <em>al dato</em></h2>
+        <p>Los cerramientos se vuelven transparentes y queda la estructura de información. Activa o apaga cada disciplina.</p>
+        <div class="chips" id="chipsDisc"></div>
       </div>
-      <div class="escena" data-e="6">
-        <p class="kicker">06 · Del edificio al plano</p>
-        <h2>Planta técnica</h2>
-        <p>Vista superior casi ortográfica del corte de la planta seleccionada.</p>
+
+      <div class="escena tarjeta" data-e="6">
+        <p class="kicker">06</p>
+        <h2>Del edificio <em>al plano</em></h2>
+        <p>Vista superior del corte, generada desde la geometría del modelo. Cambia de planta:</p>
+        <div class="chips" id="chipsPlano"></div>
       </div>
-      <div class="escena" data-e="7">
-        <p class="kicker">07 · Remodelación</p>
-        <h2>Existente vs. propuesta</h2>
+
+      <div class="escena tarjeta" data-e="7">
+        <p class="kicker">07</p>
+        <h2>Existente vs. <em>remodelación</em></h2>
         <p id="notaRemodel"></p>
       </div>
-      <div class="escena" data-e="8">
-        <p class="kicker">Ruta de implementación BACO</p>
+
+      <div class="escena tarjeta ancha" data-e="8">
+        <p class="kicker">08</p>
+        <h2>Ruta de <em>implementación</em></h2>
         <div class="etapas" id="etapas"></div>
-        <p class="fuente">Fuente: Propuesta comercial BACO Studio, v03 · 9 nov 2026.</p>
+        <div class="etapa-det" id="etapaDet"></div>
+      </div>
+
+      <div class="escena tarjeta ancha" data-e="9">
+        <p class="kicker">09</p>
+        <h2>Simula la <em>inversión</em></h2>
+        <div class="sim">
+          <div class="sim-ctrl">
+            <div class="seg" id="segModo"><button data-m="ind" class="on">Independiente</button><button data-m="int">BIM + construcción</button></div>
+            <label class="rango"><span>Duración de la obra</span><input type="range" id="rMeses" min="6" max="9" step="1" value="8" /><b id="vMeses">8 meses</b></label>
+            <label class="rango"><span>Presupuesto de obra</span><input type="range" id="rObra" min="5000" max="60000" step="500" value="25000" /><b id="vObra">$25.000 M</b></label>
+          </div>
+          <div class="sim-res">
+            <div><small>Honorarios sin IVA</small><b id="oTotal">—</b></div>
+            <div><small>Con IVA (19 %)</small><b id="oIva">—</b></div>
+            <div><small>Punto de equilibrio</small><b id="oEq">—</b><small>del presupuesto de obra</small></div>
+          </div>
+        </div>
+        <p class="fuente">Fórmula de la propuesta v03: etapas A, B y D fijas $111 M + $23 M por mes de obra (o $13,8 M con equipo de construcción BACO). Punto de equilibrio = honorario / presupuesto. No es una proyección de ahorro.</p>
       </div>
     </div>
     <div id="progreso"><i></i><ol id="marcas"></ol></div>
@@ -91,8 +130,8 @@
   </div>
 </aside>
 <div id="ficha"></div>
-<button id="volver" hidden>← Volver al recorrido</button>
-<div id="cargando"><span>Cargando modelo de Revit…</span><i></i></div>
-<p id="aviso">Prototipo de BACO Studio S.A.S. · No es un sitio oficial de Hoteles Estelar ni del Hotel La Fontana.</p>
+<button id="volver" class="pill" hidden>← Volver al recorrido</button>
+<div id="cargando"><img src="./logos/estelar.png" alt="" /><span>Cargando modelo BIM</span><i></i></div>
+<p id="aviso">Propuesta conceptual · BACO Studio para Estelar La Fontana</p>
 </body>
 </html>
