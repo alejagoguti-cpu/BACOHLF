@@ -163,3 +163,4 @@ body[data-modo="libre"] #recorrido, body[data-modo="libre"] #velo { display: non
   #panel { left: 8px; right: 8px; top: auto; height: 46vh; width: auto; }
 }
 #volver[hidden] { display: none; }
+.chip i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; vertical-align: 0; }

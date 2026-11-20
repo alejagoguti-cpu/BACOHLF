@@ -6,14 +6,17 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
+import { iniciarComercial } from './comercial';
+import './comercial.css';
 
 // ───────────────────────── datos ─────────────────────────
 interface Cat { nombre: string; vOff: number; vLen: number; tOff?: number; tLen?: number; uvOff?: number; uvLen?: number }
 interface NivelInfo { i: number; nombre: string; elev: number; zmin: number; zmax: number; archivo: string; cats: Cat[] }
 interface Manifest { fuente: string; enu: { e: number; n: number; z: number }; extension: [number, number]; niveles: NivelInfo[] }
 
-type Disc = 'Arquitectura' | 'Estructura';
-const CATS: Record<string, { arq: string; tec: string; disc: Disc; cerr?: boolean; vidrio?: boolean; metal?: number; rough?: number; nombre: string }> = {
+type Disc = 'Arquitectura' | 'Estructura' | 'Hidrosanitaria' | 'Red contra incendios' | 'Eléctrica' | 'Mecánica';
+const DISCS: Disc[] = ['Arquitectura', 'Estructura', 'Hidrosanitaria', 'Red contra incendios', 'Eléctrica', 'Mecánica'];
+const CATS: Record<string, { arq: string; tec: string; disc: Disc; cerr?: boolean; vidrio?: boolean; metal?: number; rough?: number; nombre: string; mep?: boolean }> = {
   muros:      { arq: '#dcae95', tec: '#f2f2ef', disc: 'Arquitectura', cerr: true, nombre: 'Muros' },
   ventanas:   { arq: '#7f98a6', tec: '#e8edf0', disc: 'Arquitectura', cerr: true, vidrio: true, nombre: 'Ventanas' },
   paneles:    { arq: '#d8d2c6', tec: '#eeeeea', disc: 'Arquitectura', cerr: true, nombre: 'Paneles' },
@@ -25,9 +28,18 @@ const CATS: Record<string, { arq: string; tec: string; disc: Disc; cerr?: boolea
   losas:      { arq: '#bcb7ae', tec: '#dfe4ea', disc: 'Estructura', nombre: 'Losas' },
   columnas:   { arq: '#c8c3b9', tec: '#cfd8e2', disc: 'Estructura', nombre: 'Columnas' },
   vigas:      { arq: '#c8c3b9', tec: '#cfd8e2', disc: 'Estructura', nombre: 'Vigas' },
+  // redes del Piso 2 (1001_Hotel_la_fotona_redes.rvt) · colores de las láminas técnicas
+  af:         { arq: '#1f6fd1', tec: '#1f6fd1', disc: 'Hidrosanitaria', mep: true, rough: .45, nombre: 'Agua fría' },
+  acs:        { arq: '#d23b2f', tec: '#d23b2f', disc: 'Hidrosanitaria', mep: true, rough: .45, nombre: 'Agua caliente' },
+  san:        { arq: '#8a5a32', tec: '#8a5a32', disc: 'Hidrosanitaria', mep: true, rough: .6, nombre: 'Sanitaria' },
+  sanitarios: { arq: '#f4f4f2', tec: '#f4f4f2', disc: 'Hidrosanitaria', mep: true, rough: .25, nombre: 'Aparatos sanitarios' },
+  otras:      { arq: '#8b8f96', tec: '#8b8f96', disc: 'Hidrosanitaria', mep: true, nombre: 'Otras tuberías' },
+  rci:        { arq: '#e8731a', tec: '#e8731a', disc: 'Red contra incendios', mep: true, rough: .45, nombre: 'Rociadores y red RCI' },
+  conduit:    { arq: '#2a9d8f', tec: '#2a9d8f', disc: 'Eléctrica', mep: true, rough: .5, nombre: 'Conduit' },
+  aparatos:   { arq: '#0e3064', tec: '#0e3064', disc: 'Eléctrica', mep: true, nombre: 'Tomas y aparatos' },
+  luminarias: { arq: '#f2c230', tec: '#f2c230', disc: 'Eléctrica', mep: true, nombre: 'Luminarias' },
+  ductos:     { arq: '#9aa3ad', tec: '#9aa3ad', disc: 'Mecánica', mep: true, metal: .5, rough: .4, nombre: 'Ductos' },
 };
-/** Disciplinas MEP: existen en 1001_Hotel_la_fotona_redes.rvt pero aún no se han exportado a la web. */
-const MEP = ['Eléctrica', 'Hidrosanitaria (AF / ACS / SAN)', 'Red contra incendios'];
 const ETAPAS = [
   ['00', 'Base existente', 'Proveedor externo · LOD 300'],
   ['A', 'Estructurar', 'BEP y contratación · 1 mes'],
@@ -93,7 +105,8 @@ const S = {
   dimOtros: 0,
   grilla: 0,
   ctx: 1,        // opacidad del contexto urbano
-  shift: 0,      // corre el encuadre a la derecha cuando hay una tarjeta a la izquierda
+  shift: 0,
+  mep: 0,        // 0 redes ocultas → 1 redes MEP visibles
 };
 type Estado = typeof S;
 /** Interacciones dentro del recorrido: se suman al estado de la timeline sin romper el scrub. */
@@ -202,6 +215,34 @@ async function cargarContexto(enu: Manifest['enu']) {
   hayContexto = true; suelo.visible = false;
 }
 
+// ───────────────────────── redes MEP (Piso 2) ─────────────────────────
+const cajaMep = new THREE.Box3();
+const centroMep = new THREE.Vector3(); // centroide de la tubería bajo +6 m (sin la bajante que sube a la cubierta)
+let mepInfo = null as { fuente: string; cats: (Cat & { elementos: number })[] } | null;
+async function cargarMep() {
+  const p2 = niveles.find((n) => n.info.nombre === 'PISO 2'); if (!p2) return;
+  try { mepInfo = await (await fetch('data/mep.json')).json(); } catch { return; }
+  const buf = await (await fetch('data/mep.bin')).arrayBuffer();
+  for (const c of mepInfo!.cats) {
+    const def = CATS[c.nombre]; if (!def) continue;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(buf, c.vOff, c.vLen), 3));
+    g.setIndex(new THREE.BufferAttribute(new Uint32Array(buf, c.tOff!, c.tLen!), 1));
+    g.computeVertexNormals(); g.computeBoundingBox(); cajaMep.union(g.boundingBox!);
+    if (['af', 'acs', 'san', 'rci', 'conduit'].includes(c.nombre)) {
+      const p = g.getAttribute('position'); let sx = 0, sz = 0, k = 0;
+      for (let i = 0; i < p.count; i++) if (p.getY(i) < 6) { sx += p.getX(i); sz += p.getZ(i); k++; }
+      if (k) { centroMep.x += sx; centroMep.z += sz; centroMep.y += k; }
+    }
+    const m = new THREE.MeshStandardMaterial({ color: def.arq, roughness: def.rough ?? 0.6, metalness: def.metal ?? 0.05, clippingPlanes: [corte], transparent: true, opacity: 0 });
+    m.userData = { def };
+    const mesh = new THREE.Mesh(g, m);
+    mesh.name = c.nombre; mesh.castShadow = false; mesh.receiveShadow = false; mesh.renderOrder = 2;
+    mesh.userData = { cat: c.nombre, tris: c.tLen! / 3, elementos: c.elementos, mep: true };
+    p2.grupo.add(mesh); p2.mats.set(c.nombre, m);
+  }
+}
+
 // ───────────────────────── carga ─────────────────────────
 async function cargar() {
   const man: Manifest = await (await fetch('data/manifest.json')).json();
@@ -241,9 +282,11 @@ async function cargar() {
     scene.add(grupo);
     hechos++; ($('#cargando i')).style.width = (100 * hechos / man.niveles.length) + '%';
   }));
+  await cargarMep();
   niveles.forEach((n, i) => n.grupo.children.forEach((o) => { if ((o as THREE.Mesh).isMesh) { o.userData.nivel = i; pickables.push(o as THREE.Mesh); } }));
   // separación final de cada nivel en la axonometría explotada
   niveles.forEach((n, i) => { n.destino = i * 9 + (n.info.nombre === "CUBIERTA" ? 8 : 0); });
+  if (centroMep.y > 0) centroMep.set(centroMep.x / centroMep.y, 0, centroMep.z / centroMep.y);
   return man;
 }
 
@@ -265,10 +308,11 @@ function aplicar(st: Estado) {
       m.color.copy(tmpC.set(def.arq)).lerp(new THREE.Color(def.tec), st.bim);
       let op = def.vidrio ? THREE.MathUtils.lerp(0.5, 0.35, st.bim) : 1;
       if (def.cerr) op *= THREE.MathUtils.lerp(1, def.vidrio ? 0.25 : 0.14, st.cerr);
+      if (def.mep) op *= st.mep;
       op *= n.vis;
       m.opacity = op; m.transparent = op < 0.999; m.depthWrite = op > 0.6;
-      m.emissive.copy(ACENTO).multiplyScalar(0.35 * n.hl);
-      m.visible = catsVisibles.has(cat);
+      if (def.mep) m.emissive.set(def.arq).multiplyScalar(0.6); else m.emissive.copy(ACENTO).multiplyScalar(0.35 * n.hl);
+      m.visible = catsVisibles.has(cat) && (!def.mep || st.mep > 0.01);
       if (m.userData.uMapa) { m.userData.uMapa.value = 1 - st.bim; m.normalScale.setScalar(1 - st.bim); }
     }
     n.lineas.opacity = st.bordes * n.vis;
@@ -329,6 +373,8 @@ function construirRecorrido() {
   const nivelP2 = niveles.findIndex((n) => n.info.nombre === 'PISO 2');
   const elevP2 = niveles[nivelP2]?.info.elev ?? 3;
   const cut = elevP2 + 1.6;
+  const c2 = niveles[nivelP2].caja.getCenter(new THREE.Vector3()); // centro de la planta del Piso 2
+  const cm = cajaMep.isEmpty() ? c2 : centroMep; // centro de las redes
   tl = gsap.timeline({ defaults: { ease: 'none' }, paused: true });
   const T = (obj: object, at: number, dur: number) => tl.to(S, { ...obj, duration: dur }, at);
 
@@ -360,26 +406,27 @@ function construirRecorrido() {
 
   // 04 · Entrar al edificio (Piso 2)
   T({ explode: 0 }, 30, 3);
-  T({ verHasta: nivelP2, ty: elevP2 }, 31.5, 3);
+  T({ verHasta: nivelP2, ty: elevP2, tx: c2.x, tz: c2.z }, 31.5, 3);
   T({ corteY: cut }, 32.5, 2.5);
   T({ az: 28, el: 42, dist: 72 }, 32, 4);
   T({ az: -18, el: 36, dist: 50 }, 36, 4);
 
   // 05 · Arquitectura → BIM
-  T({ verHasta: 9, corteY: 999, ty: 9 }, 40, 2);
+  T({ verHasta: 9, corteY: 999, ty: 9, tx: 0, tz: 0 }, 40, 2);
   T({ az: 45, el: 28, dist: 130 }, 40, 3);
-  T({ bim: 1, bordes: 0.55, ctx: 0.3 }, 43, 3);
-  T({ cerr: 1 }, 46, 2);
-  T({ az: 70 }, 46, 4);
+  T({ bim: 1, bordes: 0.55, ctx: 0.3 }, 41.5, 2.5);
+  T({ cerr: 1 }, 43.5, 1.5);
+  // las redes del Piso 2 quedan expuestas: se retiran los pisos de arriba y se corta sobre el cielo raso
+  T({ verHasta: nivelP2, corteY: elevP2 + 2.75, mep: 1, cerr: 0.92, bordes: 0.22, az: 12, el: 52, dist: 40, ty: elevP2 + 2, tx: cm.x, tz: cm.z, ctx: 0, shift: 0.18 }, 44.5, 3);
 
   // 06 · Del edificio al plano
-  T({ verHasta: nivelP2, corteY: cut, cerr: 0, ty: elevP2 }, 50, 2);
-  T({ az: 0, el: 89.5, dist: 105, tx: 0, tz: 0 }, 50, 5);
+  T({ verHasta: nivelP2, corteY: cut, cerr: 0, ty: elevP2, mep: 0 }, 50, 2);
+  T({ az: 0, el: 89.5, dist: 105, tx: c2.x, tz: c2.z }, 50, 5);
   T({ bordes: 1, tinta: 1, grilla: 0, ctx: 0 }, 52, 4);
   T({ orto: 1 }, 53, 5);
 
   // 07 · Remodelación — vuelve a la representación realista
-  T({ orto: 0, bim: 0, bordes: 0, tinta: 0, verHasta: 9, corteY: 999, ctx: 1 }, 60, 3);
+  T({ orto: 0, bim: 0, bordes: 0, tinta: 0, verHasta: 9, corteY: 999, ctx: 1, tx: 0, tz: 0 }, 60, 3);
   T({ az: 70, el: 20, dist: 120, ty: 9 }, 60, 4);
   T({ az: 105 }, 64, 6);
 
@@ -473,8 +520,8 @@ function vista(v: string) {
     gsap.to(S, { orto: 0, verHasta: 9, corteY: 999, duration: 1.2 });
     volar(new THREE.Vector3(85, 60, 95), new THREE.Vector3(0, 9, 0));
   }
-  if (v === 'arq') gsap.to(S, { bim: 0, cerr: 0, bordes: 0, tinta: 0, ctx: 1, duration: 1 });
-  if (v === 'bim') gsap.to(S, { bim: 1, cerr: 1, bordes: 0.55, tinta: 0, ctx: 0.3, duration: 1 });
+  if (v === 'arq') gsap.to(S, { bim: 0, cerr: 0, bordes: 0, tinta: 0, ctx: 1, mep: 0, duration: 1 });
+  if (v === 'bim') gsap.to(S, { bim: 1, cerr: 1, bordes: 0.55, tinta: 0, ctx: 0.3, mep: 1, duration: 1 });
   if (v === 'explotar') {
     const abrir = S.explode < 0.5;
     gsap.to(S, { explode: abrir ? 1 : 0, verHasta: 9, corteY: 999, duration: 2, ease: 'power1.inOut' });
@@ -494,11 +541,10 @@ function vista(v: string) {
 function pintarPanel() {
   $('#listaNiveles').innerHTML = `<li data-n="-1" class="${nivelSel < 0 ? 'sel' : ''}">Edificio completo</li>` +
     niveles.map((n, i) => `<li data-n="${i}" class="${nivelSel === i ? 'sel' : ''}">${n.info.nombre}<small>+${n.info.elev.toFixed(2)} m</small></li>`).join('');
-  const discs: Disc[] = ['Arquitectura', 'Estructura'];
-  $('#listaDisc').innerHTML = discs.map((d) => {
+  $('#listaDisc').innerHTML = DISCS.filter((d) => Object.entries(CATS).some(([c, v]) => v.disc === d && niveles.some((n) => n.mats.has(c)))).map((d) => {
     const on = Object.entries(CATS).some(([c, v]) => v.disc === d && catsVisibles.has(c));
     return `<li data-d="${d}" class="${on ? '' : 'off'}">${d}<small>${on ? 'visible' : 'oculta'}</small></li>`;
-  }).join('') + MEP.map((m) => `<li class="nd" title="Pendiente: exportar de 1001_Hotel_la_fotona_redes.rvt">${m}<small>sin exportar</small></li>`).join('');
+  }).join('');
   $('#listaCats').innerHTML = Object.entries(CATS).filter(([c]) => niveles.some((n) => n.mats.has(c)))
     .map(([c, v]) => `<li data-c="${c}" class="${catsVisibles.has(c) ? '' : 'off'}">${v.nombre}<small>${v.disc}</small></li>`).join('');
 }
@@ -529,7 +575,7 @@ canvas.addEventListener('pointerup', (ev) => {
     <dt>Nivel</dt><dd>${n.info.nombre} (+${n.info.elev.toFixed(2)} m)</dd>
     <dt>Punto</dt><dd>z = ${(h.point.y - n.grupo.position.y).toFixed(2)} m</dd>
     <dt>Geometría</dt><dd>${h.object.userData.tris.toLocaleString('es-CO')} triángulos en la categoría</dd>
-    <dt>Fuente</dt><dd>HLF_P2-P6.rvt</dd></dl>`;
+    <dt>Fuente</dt><dd>${CATS[cat].mep ? '1001_Hotel_la_fotona_redes.rvt · ' + h.object.userData.elementos + ' elementos' : 'HLF_P2-P6.rvt'}</dd></dl>`;
   $('#ficha').classList.add('on');
   if (nivelSel !== i) enfocarNivel(i);
 });
@@ -554,7 +600,7 @@ function ui() {
     const cats = Object.entries(CATS).filter(([, v]) => v.disc === li.dataset.d).map(([c]) => c);
     const on = cats.some((c) => catsVisibles.has(c));
     cats.forEach((c) => on ? catsVisibles.delete(c) : catsVisibles.add(c));
-    if (!on) gsap.fromTo(S, { bordes: Math.max(S.bordes, 0.8) }, { bordes: S.bim > 0.5 ? 0.55 : 0, duration: 1.4 });
+    if (!on && Object.entries(CATS).some(([c, v]) => v.disc === li.dataset.d && v.mep)) gsap.to(S, { mep: 1, cerr: Math.max(S.cerr, 0.8), duration: 1 });
     pintarPanel();
   });
   $('#listaCats').addEventListener('click', (e) => {
@@ -593,10 +639,11 @@ function landing() {
   rc.addEventListener('input', () => { const v = +rc.value; U.corteExtra = v - 1.6; $('#vCorte').textContent = v.toFixed(2).replace('.', ',') + ' m'; });
   // 05 · disciplinas
   const pintarDisc = () => {
-    $('#chipsDisc').innerHTML = (['Arquitectura', 'Estructura'] as Disc[]).map((d) => {
+    $('#chipsDisc').innerHTML = DISCS.filter((d) => Object.entries(CATS).some(([c, v]) => v.disc === d && niveles.some((n) => n.mats.has(c)))).map((d) => {
       const on = Object.entries(CATS).some(([c, v]) => v.disc === d && catsVisibles.has(c));
-      return `<button class="chip ${on ? 'on' : ''}" data-d="${d}">${d}</button>`;
-    }).join('') + MEP.map((m) => `<button class="chip" disabled title="Modelado en 1001_Hotel_la_fotona_redes.rvt; falta exportarlo a la web">${m.split(' (')[0]}<small>pendiente</small></button>`).join('');
+      const color = Object.values(CATS).find((v) => v.disc === d && v.mep)?.arq;
+      return `<button class="chip ${on ? 'on' : ''}" data-d="${d}">${color ? `<i style="background:${color}"></i>` : ''}${d}</button>`;
+    }).join('');
   };
   pintarDisc();
   $('#chipsDisc').addEventListener('click', (e) => {
@@ -658,6 +705,10 @@ function frame() {
     U.px += (U.tpx - U.px) * 0.05; U.py += (U.tpy - U.py) * 0.05;
     E.az += U.px * 7 * (1 - E.orto); E.el = THREE.MathUtils.clamp(E.el - U.py * 3 * (1 - E.orto), 2, 89.6);
   }
+  // pasado el recorrido, las secciones comerciales tapan el lienzo: no se dibuja
+  const pasado = modo === 'cine' && !!st && scrollY > st.end + 20;
+  document.body.classList.toggle('pasado', pasado);
+  if (pasado) { requestAnimationFrame(frame); return; }
   aplicar(E);
   if (modo === 'cine') camaraDesde(E);
   else { controls.update(); camera.fov = THREE.MathUtils.lerp(35, 5, S.orto); camera.near = 0.5 + 20 * S.orto; camera.far = 4000; camera.updateProjectionMatrix(); }
@@ -678,6 +729,12 @@ function frame() {
     () => (modo === 'cine' && escenaActual === 3 ? ss(0.6, 0.9, S.explode) : 0) || (modo === 'libre' && S.explode > 0.6 ? n.vis : 0),
     () => entrarLibre(i)));
   construirRecorrido();
+  iniciarComercial({
+    redes: (mepInfo?.cats ?? []).filter((c) => CATS[c.nombre]).map((c) => ({ nombre: CATS[c.nombre].nombre, disc: CATS[c.nombre].disc, color: CATS[c.nombre].arq === '#0e3064' ? '#7fa6e0' : CATS[c.nombre].arq, elementos: c.elementos, tris: c.tLen! / 3 })),
+    niveles: niveles.map((n) => ({ nombre: n.info.nombre, cats: n.info.cats.filter((c) => CATS[c.nombre]).map((c) => ({ nombre: CATS[c.nombre].nombre, tris: (c.tLen ?? c.vLen / 3) / 3, color: c.nombre === 'cubiertas' ? '#a5563b' : CATS[c.nombre].arq })) })),
+  });
+  document.querySelector('[data-arriba]')?.addEventListener('click', () => irAEscena(1));
+  document.querySelector('[data-explorar]')?.addEventListener('click', () => entrarLibre());
   pintarPanel();
   $('#cargando').classList.add('fin');
   gsap.from('.titulo .w', { yPercent: 110, opacity: 0, stagger: 0.14, duration: 1.4, ease: 'power3.out', delay: 0.3 });

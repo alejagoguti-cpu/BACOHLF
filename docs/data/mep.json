@@ -1,0 +1,87 @@
+{
+ "fuente": "1001_Hotel_la_fotona_redes",
+ "nivel": "PISO 2",
+ "archivo": "mep.bin",
+ "cats": [
+  {
+   "nombre": "af",
+   "vOff": 0,
+   "vLen": 79854,
+   "tOff": 319416,
+   "tLen": 171090,
+   "elementos": 369
+  },
+  {
+   "nombre": "acs",
+   "vOff": 1003776,
+   "vLen": 24441,
+   "tOff": 1101540,
+   "tLen": 46902,
+   "elementos": 324
+  },
+  {
+   "nombre": "san",
+   "vOff": 1289148,
+   "vLen": 29859,
+   "tOff": 1408584,
+   "tLen": 55650,
+   "elementos": 345
+  },
+  {
+   "nombre": "otras",
+   "vOff": 1631184,
+   "vLen": 276,
+   "tOff": 1632288,
+   "tLen": 480,
+   "elementos": 72
+  },
+  {
+   "nombre": "sanitarios",
+   "vOff": 1634208,
+   "vLen": 94233,
+   "tOff": 2011140,
+   "tLen": 165093,
+   "elementos": 64
+  },
+  {
+   "nombre": "rci",
+   "vOff": 2671512,
+   "vLen": 47346,
+   "tOff": 2860896,
+   "tLen": 75984,
+   "elementos": 419
+  },
+  {
+   "nombre": "conduit",
+   "vOff": 3164832,
+   "vLen": 77925,
+   "tOff": 3476532,
+   "tLen": 149346,
+   "elementos": 1917
+  },
+  {
+   "nombre": "aparatos",
+   "vOff": 4073916,
+   "vLen": 22023,
+   "tOff": 4162008,
+   "tLen": 40260,
+   "elementos": 98
+  },
+  {
+   "nombre": "luminarias",
+   "vOff": 4323048,
+   "vLen": 34443,
+   "tOff": 4460820,
+   "tLen": 55440,
+   "elementos": 96
+  },
+  {
+   "nombre": "ductos",
+   "vOff": 4682580,
+   "vLen": 19122,
+   "tOff": 4759068,
+   "tLen": 35340,
+   "elementos": 11
+  }
+ ]
+}
