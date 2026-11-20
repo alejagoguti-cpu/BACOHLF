@@ -106,52 +106,65 @@ body[data-modo="libre"] #recorrido { display: none; }
 #aviso { position: fixed; z-index: 5; left: 28px; bottom: 10px; margin: 0; font: 400 10px 'JetBrains Mono', monospace; letter-spacing: .04em; color: var(--tinta-2); pointer-events: none; }
 body[data-modo="libre"] #aviso { left: auto; right: 24px; bottom: 4px; }
 
-/* ───────── Estética de hospitalidad (BACO Studio) ───────── */
+/* ───────── Identidad visual alineada al material de Hoteles Estelar ─────────
+   Montserrat (Thin + SemiBold, mayúsculas) · dorado #b79e66 · gris azulado #8f9daa · gris texto · fondo blanco */
 :root {
-  --tinta: #2b231c;
-  --tinta-2: #6b5e50;
-  --papel: #f4eee3;
-  --acento: #a8823f;
-  --teja: #a5563b;
-  --linea: rgba(80, 60, 35, .16);
-  --vidrio: rgba(250, 246, 238, .88);
-  --serif: 'Cormorant Garamond', Georgia, serif;
+  --tinta: #4a4f55;
+  --tinta-2: #8a8d91;
+  --papel: #ffffff;
+  --acento: #b79e66;
+  --pizarra: #8f9daa;
+  --gris: #7d7d7d;
+  --linea: rgba(143, 157, 170, .35);
+  --vidrio: rgba(255, 255, 255, .92);
 }
-html, body { background: var(--papel); font-family: Jost, system-ui, sans-serif; font-weight: 300; }
-body::after { /* viñeta cálida sobre el lienzo */
-  content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none;
-  background: radial-gradient(120% 90% at 60% 45%, transparent 55%, rgba(120, 90, 50, .10) 100%);
-}
-.marca { font: 500 11px Jost, sans-serif; letter-spacing: .32em; text-transform: uppercase; }
-.marca b { font-weight: 500; }
-.marca span { font: italic 400 15px var(--serif); letter-spacing: .02em; text-transform: none; color: var(--tinta-2); }
-.modos { background: var(--vidrio); border: 1px solid var(--linea); border-radius: 40px; padding: 4px; }
-button { font: 400 12px Jost, sans-serif; letter-spacing: .14em; text-transform: uppercase; border-radius: 40px; padding: 9px 18px; }
-button.on { background: var(--tinta); color: #f6efe2; }
-.escena .kicker { font: 500 11px Jost, sans-serif; letter-spacing: .34em; color: var(--acento); }
-.escena .kicker::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--acento); vertical-align: middle; margin-right: 12px; }
-.escena h2 { font: 300 52px/1 var(--serif); letter-spacing: -.01em; }
-.escena p { font-size: 15px; line-height: 1.65; }
-.titulo { font: 300 clamp(52px, 7.6vw, 104px)/.92 var(--serif); letter-spacing: -.015em; }
-.titulo em { font-style: italic; color: var(--acento); }
-.sub { max-width: 380px; }
-.escena .nota { border-left-color: var(--teja); font-size: 13px; }
-.etq { font: 500 10px Jost, sans-serif; letter-spacing: .24em; background: var(--vidrio); color: var(--tinta); border: 1px solid var(--acento); border-radius: 40px; padding: 7px 14px; backdrop-filter: blur(6px); }
-.etq::after { background: var(--acento); }
-.etq.sel, .etq:hover { background: var(--acento); color: #fff; }
-.etapas { background: transparent; border: 0; gap: 10px; }
-.etapa { border: 1px solid var(--linea); border-top: 2px solid var(--acento); }
-.etapa b { font: 300 34px/1 var(--serif); }
-.etapa strong { font-weight: 500; letter-spacing: .06em; }
-#marcas li { font: 400 10px Jost, sans-serif; letter-spacing: .2em; text-transform: uppercase; }
+html, body { background: #fbfbfa; color: var(--tinta); font: 300 15px/1.6 Montserrat, system-ui, sans-serif; }
+#barra { padding: 0; height: 44px; background: var(--pizarra); pointer-events: auto; }
+#barra::before { content: ''; width: 44px; height: 44px; background: var(--acento); flex: none; }
+.marca { flex: 1; padding-left: 16px; color: #fff; font: 600 11px Montserrat, sans-serif; letter-spacing: .14em; }
+.marca span { font: 400 11px Montserrat, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.85); }
+.modos { background: transparent; padding: 0 10px 0 0; gap: 0; border-radius: 0; backdrop-filter: none; }
+button { font: 500 11px Montserrat, sans-serif; letter-spacing: .12em; text-transform: uppercase; border-radius: 0; padding: 9px 16px; color: var(--tinta); }
+.modos button { color: #fff; }
+.modos button.on, button.on { background: var(--acento); color: #fff; }
+.escena p { color: var(--tinta-2); }
+.escena .kicker { font: 600 11px Montserrat, sans-serif; letter-spacing: .2em; color: var(--pizarra); }
+.escena h2 { font: 200 44px/1.05 Montserrat, sans-serif; text-transform: uppercase; letter-spacing: .04em; color: var(--acento); }
+.escena[data-e="1"] { top: 16vh; }
+.titulo { font: 200 clamp(46px, 6.4vw, 92px)/1 Montserrat, sans-serif; letter-spacing: .05em; color: var(--acento); margin: 0; }
+.titulo b { font-weight: 600; }
+.bajada { font: 300 26px Montserrat, sans-serif !important; color: var(--tinta-2) !important; margin: 2px 0 14px !important; }
+.filete { border: 0; height: 2px; background: var(--acento); width: 100%; max-width: 520px; margin: 0 0 18px; }
+.cifras { display: flex; gap: 42px; }
+.cifras span { display: flex; align-items: center; gap: 10px; font: 400 12px/1.05 Montserrat, sans-serif; letter-spacing: .04em; color: var(--acento); }
+.cifras b { font: 700 54px/1 Montserrat, sans-serif; color: var(--pizarra); letter-spacing: -.02em; }
+.escena .nota { border-left: 3px solid var(--acento); }
+.etq { font: 600 10px Montserrat, sans-serif; letter-spacing: .12em; background: var(--pizarra); color: #fff; border-radius: 0; padding: 7px 12px; }
+.etq::after { background: var(--pizarra); }
+.etq.sel, .etq:hover { background: var(--acento); }
+.etq.sel::after, .etq:hover::after { background: var(--acento); }
+.etapas { gap: 0; background: #fff; border: 1px solid var(--linea); grid-template-columns: repeat(5, 1fr); }
+.etapa { background: #fff; padding: 0 0 14px; border-right: 1px solid var(--linea); backdrop-filter: none; }
+.etapa:last-child { border-right: 0; }
+.etapa b { font: 600 13px Montserrat, sans-serif; color: #fff; background: var(--acento); padding: 10px 12px; letter-spacing: .1em; }
+.etapa strong { font: 600 12px Montserrat, sans-serif; text-transform: uppercase; letter-spacing: .06em; color: var(--tinta); margin: 12px 12px 4px; }
+.etapa span { display: block; margin: 0 12px; font-size: 12px; color: var(--tinta-2); }
+#marcas li { font: 500 10px Montserrat, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--pizarra); }
+#progreso { background: var(--linea); }
 #progreso i { background: var(--acento); }
-#panel { border-radius: 4px; }
-#panel h3, #ficha h4 { font-family: Jost, sans-serif; letter-spacing: .3em; }
-#panel li { font-size: 14px; font-weight: 300; }
-#panel li small { font-family: Jost, sans-serif; letter-spacing: .06em; }
-#ficha { background: #2b231c; color: #f4eee3; border-top: 2px solid var(--acento); }
-#ficha dt { color: #b9a990; }
-#volver { border-radius: 40px; }
-#cargando { background: var(--papel); font: italic 300 22px var(--serif); letter-spacing: .02em; }
+#panel { top: 60px; border-radius: 0; background: var(--vidrio); border: 1px solid var(--linea); border-top: 3px solid var(--acento); }
+#panel h3, #ficha h4 { font: 600 10px Montserrat, sans-serif; letter-spacing: .18em; color: var(--acento); }
+#panel li { font: 400 13px Montserrat, sans-serif; }
+#panel li small { font: 400 10px Montserrat, sans-serif; letter-spacing: .06em; color: var(--pizarra); }
+#panel li.sel { color: var(--acento); }
+.vistas button { border: 1px solid var(--linea); }
+#ficha { background: var(--gris); color: #fff; border-top: 3px solid var(--acento); }
+#ficha h4 { color: #fff; }
+#ficha dt { color: #e4e4e4; }
+#volver { background: var(--acento); color: #fff; border-radius: 0; }
+#cargando { background: #fff; font: 200 20px Montserrat, sans-serif; letter-spacing: .2em; text-transform: uppercase; color: var(--acento); }
 #cargando i { background: var(--acento); }
-#aviso { font: 400 10px Jost, sans-serif; letter-spacing: .08em; }
+#aviso { font: 400 10px Montserrat, sans-serif; letter-spacing: .04em; color: var(--tinta-2); }
+@media (max-width: 760px) { .marca span { display: none; } .titulo { font-size: 40px; } .cifras b { font-size: 38px; } }
+#panel { padding: 8px 16px 16px; }
+.vistas button { padding: 9px 4px; letter-spacing: .08em; }

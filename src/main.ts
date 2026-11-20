@@ -46,7 +46,7 @@ renderer.toneMappingExposure = 1.05;
 renderer.localClippingEnabled = true;
 
 const scene = new THREE.Scene();
-const PAPEL = new THREE.Color('#f4eee3');
+const PAPEL = new THREE.Color('#fbfbfa');
 scene.background = PAPEL.clone();
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
@@ -61,7 +61,7 @@ scene.add(sol);
 const suelo = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), new THREE.ShadowMaterial({ opacity: 0.16 }));
 suelo.rotation.x = -Math.PI / 2; suelo.position.y = -1.25; suelo.receiveShadow = true;
 scene.add(suelo);
-const grilla = new THREE.GridHelper(400, 80, 0xc9b89a, 0xe2d8c6);
+const grilla = new THREE.GridHelper(400, 80, 0xbfc8d1, 0xe4e8ec);
 (grilla.material as THREE.Material).transparent = true; (grilla.material as THREE.Material).opacity = 0;
 grilla.position.y = -1.24; scene.add(grilla);
 
@@ -72,7 +72,7 @@ controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 8; controls.max
 controls.enabled = false;
 
 const corte = new THREE.Plane(new THREE.Vector3(0, -1, 0), 999);
-const ACENTO = new THREE.Color('#a8823f');
+const ACENTO = new THREE.Color('#b79e66');
 
 // ───────────────────────── estado ─────────────────────────
 /** Estado visual completo. En el recorrido lo escribe la timeline (scroll); en modo libre, gsap/la UI. */
@@ -109,7 +109,7 @@ async function cargar() {
     const buf = await (await fetch('data/' + info.archivo)).arrayBuffer();
     const grupo = new THREE.Group(); grupo.name = info.nombre;
     const mats = new Map<string, THREE.MeshStandardMaterial>();
-    const lineas = new THREE.LineBasicMaterial({ color: '#3a3026', transparent: true, opacity: 0, depthWrite: false, clippingPlanes: [corte] });
+    const lineas = new THREE.LineBasicMaterial({ color: '#4d5966', transparent: true, opacity: 0, depthWrite: false, clippingPlanes: [corte] });
     const caja = new THREE.Box3();
     for (const c of info.cats) {
       const def = CATS[c.nombre]; if (!def) continue;
@@ -166,7 +166,7 @@ function aplicar(st: Estado) {
       m.visible = catsVisibles.has(cat);
     }
     n.lineas.opacity = st.bordes * n.vis;
-    n.lineas.color.set('#8a7a66').lerp(new THREE.Color('#2b231c'), st.tinta);
+    n.lineas.color.set('#8f9daa').lerp(new THREE.Color('#2f3a45'), st.tinta);
     n.grupo.children.forEach((o) => { if ((o as THREE.LineSegments).isLineSegments) o.visible = st.bordes > 0.01 && catsVisibles.has(o.userData.cat); });
   });
   corte.constant = st.corteY;
