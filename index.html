@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Torre Suites · BIM Experience</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./src/style.css" />
+</head>
+<body data-modo="cine">
+<canvas id="gl"></canvas>
+<div id="etiquetas"></div>
+
+<header id="barra">
+  <div class="marca"><b>BACO</b> / STUDIO <span>Hotel Estelar La Fontana · Torre Suites</span></div>
+  <nav class="modos">
+    <button data-modo="cine" class="on">Recorrido</button>
+    <button data-modo="libre">Exploración libre</button>
+  </nav>
+</header>
+
+<!-- MODO A: recorrido controlado por scroll -->
+<div id="recorrido">
+  <section id="escenario">
+    <div class="hud">
+      <div class="escena" data-e="1">
+        <p class="kicker">01 · El hotel emerge</p>
+        <h1 class="titulo">Torre Suites<br /><em>BIM Experience</em></h1>
+        <p class="sub">Modelo de Revit HLF_P2-P6 · 7 niveles · geometría real</p>
+      </div>
+      <div class="escena" data-e="2">
+        <p class="kicker">02 · Reconocer la edificación</p>
+        <h2>Una sola fuente coordinada</h2>
+        <p>Haz clic sobre el edificio para centrarlo y ver sus niveles.</p>
+      </div>
+      <div class="escena" data-e="3">
+        <p class="kicker">03 · Explosión arquitectónica</p>
+        <h2>Nivel por nivel</h2>
+        <p>Cada piso es un grupo independiente del modelo. Haz clic en una planta para explorarla.</p>
+      </div>
+      <div class="escena" data-e="4">
+        <p class="kicker">04 · Entrar al edificio</p>
+        <h2>Piso 2</h2>
+        <p>Corte a 1,60 m sobre el nivel. Las plantas superiores se retiran para ver el interior.</p>
+      </div>
+      <div class="escena" data-e="5">
+        <p class="kicker">05 · Arquitectura → BIM</p>
+        <h2>Del material al dato</h2>
+        <p>Los cerramientos se vuelven transparentes y queda la estructura de información.</p>
+        <p class="nota" id="notaMep"></p>
+      </div>
+      <div class="escena" data-e="6">
+        <p class="kicker">06 · Del edificio al plano</p>
+        <h2>Planta técnica</h2>
+        <p>Vista superior casi ortográfica del corte de la planta seleccionada.</p>
+      </div>
+      <div class="escena" data-e="7">
+        <p class="kicker">07 · Remodelación</p>
+        <h2>Existente vs. propuesta</h2>
+        <p id="notaRemodel"></p>
+      </div>
+      <div class="escena" data-e="8">
+        <p class="kicker">Ruta de implementación BACO</p>
+        <div class="etapas" id="etapas"></div>
+        <p class="fuente">Fuente: Propuesta comercial BACO Studio, v03 · 9 nov 2026.</p>
+      </div>
+    </div>
+    <div id="progreso"><i></i><ol id="marcas"></ol></div>
+  </section>
+</div>
+
+<!-- MODO B: exploración libre -->
+<aside id="panel">
+  <h3>Niveles</h3>
+  <ul id="listaNiveles"></ul>
+  <h3>Disciplinas</h3>
+  <ul id="listaDisc"></ul>
+  <h3>Categorías</h3>
+  <ul id="listaCats"></ul>
+  <h3>Vista</h3>
+  <div class="vistas">
+    <button data-v="arq" class="on">Arquitectura</button>
+    <button data-v="bim">Técnica</button>
+    <button data-v="plano">Planta</button>
+    <button data-v="explotar">Explotar</button>
+  </div>
+</aside>
+<div id="ficha"></div>
+<button id="volver" hidden>← Volver al recorrido</button>
+<div id="cargando"><span>Cargando modelo de Revit…</span><i></i></div>
+<script type="module" src="./src/main.ts"></script>
+</body>
+</html>

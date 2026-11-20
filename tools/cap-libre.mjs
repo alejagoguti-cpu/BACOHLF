@@ -1,0 +1,15 @@
+import puppeteer from 'puppeteer-core';
+const b = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: 'new', args: ['--use-angle=d3d11', '--ignore-gpu-blocklist'] });
+const p = await b.newPage(); await p.setViewport({ width: 1440, height: 860 });
+p.on('pageerror', (e) => console.log('PAGEERR', e.message));
+const w = (ms) => new Promise((r) => setTimeout(r, ms));
+await p.goto(process.argv[2], { waitUntil: 'networkidle0' }); await w(2000);
+await p.click('.modos button[data-modo="libre"]'); await w(1500);
+await p.click('.vistas button[data-v="explotar"]'); await w(2600);
+await p.screenshot({ path: 'tools/cap/libre1.jpg', quality: 70 });
+await p.evaluate(() => [...document.querySelectorAll('#listaNiveles li')].find((l) => l.textContent.startsWith('PISO 3')).click()); await w(3000);
+await p.mouse.click(760, 430); await w(800);
+await p.screenshot({ path: 'tools/cap/libre2.jpg', quality: 70 });
+await p.click('.vistas button[data-v="plano"]'); await w(2500);
+await p.screenshot({ path: 'tools/cap/libre3.jpg', quality: 70 });
+await b.close();
