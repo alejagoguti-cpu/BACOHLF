@@ -1,8 +1,9 @@
 /* ───────── premisa "construir antes de construir": apertura, tarjetas por fase y tablero en vivo ───────── */
-.hero-k { position: absolute; left: clamp(20px, 6.5vw, 112px); top: 9vh; margin: 0; font: 500 12px var(--head); letter-spacing: .3em; text-transform: uppercase; color: var(--gold); }
-.titulo { font-size: clamp(56px, 8.6vw, 148px); max-width: 9.5ch; }
+.hero-k { position: absolute; left: clamp(20px, 3.8vw, 60px); top: 3.5vh; margin: 0; font: 500 12px var(--head); letter-spacing: .3em; text-transform: uppercase; color: var(--gold); text-shadow: 0 2px 12px rgba(6, 18, 40, .85); }
+.titulo { font-size: clamp(40px, 4.8vw, 72px); max-width: 11.5ch; left: clamp(20px, 3.8vw, 60px); bottom: 4.5vh; text-shadow: 0 6px 28px rgba(6, 18, 40, .85); }
 .titulo .w:nth-child(2) { color: var(--gold); }
-#velo { background: radial-gradient(120% 90% at 70% 50%, rgba(14, 48, 100, 0) 30%, rgba(6, 18, 40, .55) 100%); }
+.hero-der { right: clamp(20px, 3.8vw, 60px); bottom: 4.5vh; max-width: 340px; }
+#velo { background: linear-gradient(0deg, rgba(6, 18, 40, .74) 0%, rgba(6, 18, 40, .26) 23%, rgba(6, 18, 40, 0) 46%); }
 
 .pill.oscuro { background: var(--navy); color: #fff; margin-top: 6px; }
 .pill.oscuro:hover { background: var(--gold); }
