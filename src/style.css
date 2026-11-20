@@ -102,3 +102,6 @@ body[data-modo="libre"] #recorrido { display: none; }
 #listaNiveles li { border: 1px solid var(--linea) !important; padding: 6px 8px !important; flex-direction: column; align-items: flex-start !important; }
 #listaNiveles li:first-child { grid-column: 1 / -1; }
 #listaNiveles li.sel { border-color: var(--acento) !important; }
+
+#aviso { position: fixed; z-index: 5; left: 28px; bottom: 10px; margin: 0; font: 400 10px 'JetBrains Mono', monospace; letter-spacing: .04em; color: var(--tinta-2); pointer-events: none; }
+body[data-modo="libre"] #aviso { left: auto; right: 24px; bottom: 4px; }
