@@ -105,3 +105,53 @@ body[data-modo="libre"] #recorrido { display: none; }
 
 #aviso { position: fixed; z-index: 5; left: 28px; bottom: 10px; margin: 0; font: 400 10px 'JetBrains Mono', monospace; letter-spacing: .04em; color: var(--tinta-2); pointer-events: none; }
 body[data-modo="libre"] #aviso { left: auto; right: 24px; bottom: 4px; }
+
+/* ───────── Estética de hospitalidad (BACO Studio) ───────── */
+:root {
+  --tinta: #2b231c;
+  --tinta-2: #6b5e50;
+  --papel: #f4eee3;
+  --acento: #a8823f;
+  --teja: #a5563b;
+  --linea: rgba(80, 60, 35, .16);
+  --vidrio: rgba(250, 246, 238, .88);
+  --serif: 'Cormorant Garamond', Georgia, serif;
+}
+html, body { background: var(--papel); font-family: Jost, system-ui, sans-serif; font-weight: 300; }
+body::after { /* viñeta cálida sobre el lienzo */
+  content: ''; position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: radial-gradient(120% 90% at 60% 45%, transparent 55%, rgba(120, 90, 50, .10) 100%);
+}
+.marca { font: 500 11px Jost, sans-serif; letter-spacing: .32em; text-transform: uppercase; }
+.marca b { font-weight: 500; }
+.marca span { font: italic 400 15px var(--serif); letter-spacing: .02em; text-transform: none; color: var(--tinta-2); }
+.modos { background: var(--vidrio); border: 1px solid var(--linea); border-radius: 40px; padding: 4px; }
+button { font: 400 12px Jost, sans-serif; letter-spacing: .14em; text-transform: uppercase; border-radius: 40px; padding: 9px 18px; }
+button.on { background: var(--tinta); color: #f6efe2; }
+.escena .kicker { font: 500 11px Jost, sans-serif; letter-spacing: .34em; color: var(--acento); }
+.escena .kicker::before { content: ''; display: inline-block; width: 34px; height: 1px; background: var(--acento); vertical-align: middle; margin-right: 12px; }
+.escena h2 { font: 300 52px/1 var(--serif); letter-spacing: -.01em; }
+.escena p { font-size: 15px; line-height: 1.65; }
+.titulo { font: 300 clamp(52px, 7.6vw, 104px)/.92 var(--serif); letter-spacing: -.015em; }
+.titulo em { font-style: italic; color: var(--acento); }
+.sub { max-width: 380px; }
+.escena .nota { border-left-color: var(--teja); font-size: 13px; }
+.etq { font: 500 10px Jost, sans-serif; letter-spacing: .24em; background: var(--vidrio); color: var(--tinta); border: 1px solid var(--acento); border-radius: 40px; padding: 7px 14px; backdrop-filter: blur(6px); }
+.etq::after { background: var(--acento); }
+.etq.sel, .etq:hover { background: var(--acento); color: #fff; }
+.etapas { background: transparent; border: 0; gap: 10px; }
+.etapa { border: 1px solid var(--linea); border-top: 2px solid var(--acento); }
+.etapa b { font: 300 34px/1 var(--serif); }
+.etapa strong { font-weight: 500; letter-spacing: .06em; }
+#marcas li { font: 400 10px Jost, sans-serif; letter-spacing: .2em; text-transform: uppercase; }
+#progreso i { background: var(--acento); }
+#panel { border-radius: 4px; }
+#panel h3, #ficha h4 { font-family: Jost, sans-serif; letter-spacing: .3em; }
+#panel li { font-size: 14px; font-weight: 300; }
+#panel li small { font-family: Jost, sans-serif; letter-spacing: .06em; }
+#ficha { background: #2b231c; color: #f4eee3; border-top: 2px solid var(--acento); }
+#ficha dt { color: #b9a990; }
+#volver { border-radius: 40px; }
+#cargando { background: var(--papel); font: italic 300 22px var(--serif); letter-spacing: .02em; }
+#cargando i { background: var(--acento); }
+#aviso { font: 400 10px Jost, sans-serif; letter-spacing: .08em; }
