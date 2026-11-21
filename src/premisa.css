@@ -1,7 +1,7 @@
 /* ───────── apertura y relato de tiempo, dinero y gestión ───────── */
 .hero-k { position: absolute; left: clamp(20px, 6.5vw, 112px); top: 7vh; margin: 0; font: 500 12px var(--head); letter-spacing: .3em; text-transform: uppercase; color: var(--gold); }
-.titulo { top: clamp(90px, 17vh, 180px); bottom: auto; max-width: min(1100px, calc(100vw - 40px)); font-size: clamp(52px, 7.2vw, 112px); line-height: .96; }
-.titulo .w { display: block; text-shadow: 0 2px 3px rgba(5, 18, 40, .95), 0 0 18px #071b3b, 0 0 36px #071b3b; }
+.titulo { top: clamp(90px, 17vh, 180px); bottom: auto; max-width: min(1300px, calc(100vw - 180px)); font-size: clamp(46px, 5.3vw, 88px); line-height: 1.04; }
+.titulo .w { display: block; white-space: nowrap; text-shadow: 0 2px 3px rgba(5, 18, 40, .95), 0 0 18px #071b3b, 0 0 36px #071b3b; }
 .titulo .w:nth-child(2) { color: var(--gold); }
 .hero-der { left: clamp(20px, 6.5vw, 112px); right: auto; bottom: 8vh; max-width: 560px; }
 .hero-der p { font-size: clamp(16px, 1.35vw, 20px); line-height: 1.5; }
@@ -23,7 +23,8 @@
   .hero::before { content: ''; position: absolute; top: 8vh; left: 0; right: 0; height: 42vh; pointer-events: none;
     background: radial-gradient(ellipse 90% 55% at 22% 32%, rgba(5, 22, 50, .94), rgba(5, 22, 50, .68) 58%, transparent 100%); }
   .hero-k { top: 4vh; }
-  .titulo { top: 13vh; bottom: auto; max-width: calc(100vw - 40px); font-size: clamp(42px, 7.2vw, 64px); font-weight: 400; }
+  .titulo { top: 13vh; bottom: auto; max-width: calc(100vw - 40px); font-size: clamp(42px, 7.2vw, 64px); font-weight: 400; line-height: .96; }
+  .titulo .w { white-space: normal; }
   .hero-der { left: 20px; right: 20px; bottom: 7vh; max-width: 560px; }
   .tarjeta { bottom: 6vh; }
 }
