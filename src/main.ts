@@ -458,10 +458,10 @@ function actualizarEtiquetas() {
 // ───────────────────────── recorrido (MODO A): "construir antes de construir" ─────────────────────────
 // El scroll recorre las etapas del proyecto.
 let tl: gsap.core.Timeline; let st: ScrollTrigger;
-let escenaActual = 1; // 1 apertura · 2 A · 3 B · 4 C · 5 D
+let escenaActual = 1; // 1 apertura · 2 tiempo · 3 dinero · 4 gestión
 const FASES = [
-  { k: '00', nombre: 'Escaneo', t0: 0 }, { k: 'A', nombre: 'Estructurar', t0: 10 }, { k: 'B', nombre: 'Coordinar', t0: 25 },
-  { k: 'C', nombre: 'Construir', t0: 55 }, { k: 'D', nombre: 'Entregar', t0: 105 },
+  { k: '00', nombre: 'Inicio', t0: 0 }, { k: '01', nombre: 'Tiempo', t0: 22 },
+  { k: '02', nombre: 'Dinero', t0: 58 }, { k: '03', nombre: 'Gestión', t0: 102 },
 ];
 const T_FIN = 130;
 function construirRecorrido() {
@@ -475,16 +475,13 @@ function construirRecorrido() {
   tl = gsap.timeline({ defaults: { ease: 'none' }, paused: true });
   const T = (obj: object, at: number, dur: number, ease = 'none') => tl.to(S, { ...obj, duration: dur, ease }, at);
 
-  // 00 · Escaneo (mes 0): la nube gira despacio
+  // La nube de puntos se convierte gradualmente en la estructura al deslizar.
   T({ az: 18, el: 20, dist: 104 }, 0, 10);
-  tl.to('.titulo .w', { yPercent: -80, opacity: 0, stagger: 0.6, duration: 4 }, 4);
-  tl.to('.hero-der', { y: -60, opacity: 0, duration: 3 }, 4);
-  tl.to('#velo', { opacity: 0, duration: 5 }, 6);
+  tl.to('#velo', { opacity: 0, duration: 16 }, 12);
 
-  // A · Estructurar: la nube se condensa en el modelo técnico, el día se aclara
-  T({ nube: 0 }, 11, 7, 'power1.inOut');
-  T({ noche: 0 }, 12, 8);
-  T({ bordes: 0.5, az: -32, el: 30, dist: 128 }, 11, 14, 'power1.inOut');
+  T({ nube: 0 }, 12, 30);
+  T({ noche: 0 }, 14, 22);
+  T({ bordes: 0.5, az: -32, el: 30, dist: 128 }, 12, 30);
 
   // B · Coordinar: las redes reales del Piso 2 se trazan y aparece el punto crítico
   T({ verHasta: nivelP2, corteY: elevP2 + 2.75, cerr: 0.92, bordes: 0.22, mep: 1, ctx: 0, az: 14, el: 52, dist: 44, ty: elevP2 + 2, tx: cm.x, tz: cm.z, shift: 0.16 }, 25, 5, 'power2.inOut');
@@ -503,7 +500,7 @@ function construirRecorrido() {
   T({ cerr: 0.6, mep: 1, az: 55, el: 34, dist: 96, ty: 7, tx: c2.x, tz: c2.z, ctx: 0.25 }, 105, 10, 'power2.inOut');
   T({ cerr: 0, mep: 0, az: 15, el: 22, dist: 125, ty: 9, tx: 0, tz: 0, ctx: 1 }, 120, 10, 'power2.inOut');
 
-  // tarjetas de cada fase
+  // Una tarjeta por tema, vinculada a la posición del scroll.
   FASES.forEach((f, i) => {
     const el = `.escena[data-e="${i + 1}"]`; const fin = FASES[i + 1]?.t0 ?? T_FIN;
     if (i === 0) gsap.set(el, { autoAlpha: 1 });
@@ -514,7 +511,7 @@ function construirRecorrido() {
 
   $('#marcas').innerHTML = FASES.map((f) => `<li style="top:${(f.t0 / T_FIN) * 100}%">${f.k} · ${f.nombre}</li>`).join('');
   st = ScrollTrigger.create({
-    trigger: '#escenario', start: 'top top', end: () => '+=' + innerHeight * 20,
+    trigger: '#escenario', start: 'top top', end: () => '+=' + innerHeight * 6,
     pin: true, anticipatePin: 1, scrub: true, invalidateOnRefresh: true, animation: tl,
     onUpdate: (self) => {
       ($('#progreso i')).style.height = (self.progress * 100) + '%';
@@ -627,7 +624,7 @@ canvas.addEventListener('pointerup', (ev) => {
   const h = pick(ev); if (!h) return;
   const i = h.object.userData.nivel as number;
   if (modo === 'cine') {
-    if (escenaActual === 4) entrarLibre(i); else if (escenaActual > 1) entrarLibre();
+    if (escenaActual === 3) entrarLibre(i); else if (escenaActual > 1) entrarLibre();
     return;
   }
   const cat = h.object.userData.cat as string; const n = niveles[i];
@@ -644,7 +641,7 @@ canvas.addEventListener('pointermove', (ev) => {
   const activo = modo === 'libre' || escenaActual > 1;
   const h = activo ? pick(ev) : undefined;
   canvas.style.cursor = h ? 'pointer' : '';
-  if (modo === 'cine' && escenaActual === 4) S.sel = h ? h.object.userData.nivel : -1;
+  if (modo === 'cine' && escenaActual === 3) S.sel = h ? h.object.userData.nivel : -1;
 });
 
 // ───────────────────────── UI ─────────────────────────
@@ -674,35 +671,13 @@ function ui() {
 
 // ───────────────────────── landing: interacciones dentro del recorrido ─────────────────────────
 function irAFase(f: number) {
-  const t = (FASES[f - 1]?.t0 ?? 0) + (f === 3 ? 20 : 6);
+  const t = (FASES[f - 1]?.t0 ?? 0) + 6;
   window.scrollTo({ top: st.start + (st.end - st.start) * (t / T_FIN), behavior: 'smooth' });
 }
 function landing() {
   addEventListener('pointermove', (ev) => { if (modo === 'cine') { U.tpx = ev.clientX / innerWidth - 0.5; U.tpy = ev.clientY / innerHeight - 0.5; } });
   document.querySelectorAll<HTMLElement>('[data-ir]').forEach((b) => b.addEventListener('click', () => irAFase(+b.dataset.ir!)));
   $('#marcas').addEventListener('click', (e) => { const li = (e.target as HTMLElement).closest('li'); if (li) irAFase([...li.parentElement!.children].indexOf(li) + 1); });
-  // B · disciplinas de las redes
-  const pintarDisc = () => {
-    $('#chipsDisc').innerHTML = DISCS.filter((d) => Object.entries(CATS).some(([c, v]) => v.disc === d && v.mep && niveles.some((n) => n.mats.has(c)))).map((d) => {
-      const on = Object.entries(CATS).some(([c, v]) => v.disc === d && catsVisibles.has(c));
-      const color = Object.values(CATS).find((v) => v.disc === d && v.mep)?.arq;
-      return `<button class="chip ${on ? 'on' : ''}" data-d="${d}"><i style="background:${color}"></i>${d}</button>`;
-    }).join('');
-  };
-  pintarDisc();
-  $('#chipsDisc').addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (!b?.dataset.d) return;
-    const cats = Object.entries(CATS).filter(([, v]) => v.disc === b.dataset.d).map(([c]) => c);
-    const on = cats.some((c) => catsVisibles.has(c));
-    cats.forEach((c) => on ? catsVisibles.delete(c) : catsVisibles.add(c));
-    pintarDisc();
-  });
-  if (critico.ok) $('#txtCritico').innerHTML = `Separación mínima medida en el modelo entre la red contra incendios y el conduit eléctrico: <b>${(critico.d * 100).toFixed(1).replace('.', ',')} cm</b>. Un punto así se lleva a la mesa técnica antes de instalar.`;
-  // C · pisos
-  $('#chipsNiveles').innerHTML = niveles.map((n, i) => `<button class="chip" data-n="${i}">${n.info.nombre}</button>`).join('');
-  $('#chipsNiveles').addEventListener('mouseover', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (b) S.sel = +b.dataset.n!; });
-  $('#chipsNiveles').addEventListener('mouseleave', () => { S.sel = -1; });
-  $('#chipsNiveles').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.chip'); if (b) entrarLibre(+b.dataset.n!); });
   // simulador (sección de inversión)
   let integrada = false;
   const M = (v: number) => '$' + v.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' M';
@@ -765,10 +740,8 @@ function frame() {
   });
   document.querySelector('[data-arriba]')?.addEventListener('click', () => irAFase(1));
   document.querySelector('[data-explorar]')?.addEventListener('click', () => entrarLibre());
-  document.querySelector('[data-explorar-hud]')?.addEventListener('click', () => entrarLibre());
   pintarPanel();
   $('#cargando').classList.add('fin');
   gsap.from('.titulo .w', { yPercent: 110, opacity: 0, stagger: 0.14, duration: 1.4, ease: 'power3.out', delay: 0.3 });
-  gsap.from('.hero-der', { y: 30, opacity: 0, duration: 1.2, ease: 'power3.out', delay: 0.8 });
   frame();
 })();
