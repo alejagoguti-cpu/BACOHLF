@@ -1,4 +1,4 @@
-/* ───────── premisa "construir antes de construir": apertura, tarjetas por fase y tablero en vivo ───────── */
+/* ───────── premisa "construir antes de construir": apertura y tarjetas por fase ───────── */
 .hero-k { position: absolute; left: clamp(20px, 6.5vw, 112px); top: 9vh; margin: 0; font: 500 12px var(--head); letter-spacing: .3em; text-transform: uppercase; color: var(--gold); }
 .titulo { font-size: clamp(56px, 8.6vw, 148px); max-width: 9.5ch; }
 .titulo .w:nth-child(2) { color: var(--gold); }
@@ -11,39 +11,12 @@
 .critico b { color: #c8402f; }
 .tarjeta .chips span.chip { cursor: default; }
 
-#hudObra { position: absolute; right: clamp(60px, 6vw, 110px); top: 110px; width: 290px; padding: 18px 18px 14px; color: #fff; visibility: hidden;
-  background: rgba(9, 26, 56, .78); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, .12); border-top: 2px solid var(--gold);
-  box-shadow: 0 30px 70px -30px rgba(0, 0, 0, .6); pointer-events: auto; }
-.h-mes { display: flex; align-items: baseline; gap: 8px; }
-.h-mes small { font: 500 10px var(--head); letter-spacing: .24em; text-transform: uppercase; color: var(--gold); }
-.h-mes b { font: 200 64px/1 var(--tight); letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
-.h-mes span { color: rgba(255, 255, 255, .45); font: 300 18px var(--tight); }
-.h-fases { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin: 12px 0 14px; }
-.h-fases b { text-align: center; padding: 6px 0; font: 500 11px var(--head); letter-spacing: .1em; border: 1px solid rgba(255, 255, 255, .15); color: rgba(255, 255, 255, .45); transition: background .4s, color .4s, border-color .4s; }
-.h-fases b.hecho { color: var(--gold); border-color: rgba(181, 149, 53, .5); }
-.h-fases b.on { background: var(--gold); border-color: var(--gold); color: #fff; }
-.h-tit { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
-.h-tit small { font: 500 9px var(--head); letter-spacing: .2em; text-transform: uppercase; color: rgba(255, 255, 255, .6); }
-.mini-seg { padding: 2px; border-color: rgba(255, 255, 255, .2); background: transparent; margin: 0; }
-.mini-seg button { padding: 4px 9px; font-size: 10px; color: #fff; }
-.mini-seg button.on { background: #fff; color: var(--navy); }
-#hudCurva { display: block; width: 100%; height: 110px; }
-.h-dos { display: flex; justify-content: space-between; margin-top: 6px; font: 300 18px var(--tight); font-variant-numeric: tabular-nums; }
-.h-dos .ln { margin-left: 0; }
-.h-dos .ln.a { background: #7fb0ff; }
-.h-cnt { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .12); }
-.h-cnt b { display: block; font: 200 34px/1 var(--tight); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
-.h-cnt small { font-size: 11px; color: rgba(255, 255, 255, .6); }
-.h-fuente { margin: 10px 0 0; font-size: 10px; color: rgba(255, 255, 255, .4); }
 #progreso { right: clamp(14px, 1.6vw, 26px); }
 #marcas li { right: 10px; }
 
 .inv-sim { background: #fff; border: 1px solid var(--line); border-top: 2px solid var(--gold); padding: 30px; }
 
 @media (max-width: 900px) {
-  #hudObra { top: auto; bottom: 8px; right: 8px; left: auto; width: 200px; padding: 10px; }
-  .h-curva, .h-fuente { display: none; }
-  .h-mes b { font-size: 40px; }
   .hero-k { top: 4vh; }
 }
 #marcas { display: none; }

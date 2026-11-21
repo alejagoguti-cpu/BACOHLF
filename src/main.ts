@@ -114,7 +114,6 @@ const S = {
   obra: 1,       // avance de la construcción: los niveles pasan de modelo técnico a obra, de abajo hacia arriba
   dibujo: 1,     // fracción dibujada de las redes MEP (se trazan tubo a tubo)
   alerta: 0,     // punto crítico real detectado en el modelo de redes
-  mes: 0,        // reloj del proyecto (0–12)
 };
 type Estado = typeof S;
 /** Interacciones dentro del recorrido: se suman al estado de la timeline sin romper el scrub. */
@@ -457,7 +456,7 @@ function actualizarEtiquetas() {
 }
 
 // ───────────────────────── recorrido (MODO A): "construir antes de construir" ─────────────────────────
-// El scroll es el reloj del proyecto: mes 0 → 12, con las etapas y honorarios de la Propuesta BACO v03.
+// El scroll recorre las etapas del proyecto.
 let tl: gsap.core.Timeline; let st: ScrollTrigger;
 let escenaActual = 1; // 1 apertura · 2 A · 3 B · 4 C · 5 D
 const FASES = [
@@ -465,29 +464,16 @@ const FASES = [
   { k: 'C', nombre: 'Construir', t0: 55 }, { k: 'D', nombre: 'Entregar', t0: 105 },
 ];
 const T_FIN = 130;
-/** Honorarios acumulados (millones COP, sin IVA) según el cronograma de la propuesta: A mes 0–1, B 1–3, C 3–11, D 11–12. */
-function honorarios(m: number, integrada: boolean) {
-  const r = integrada ? 13.8 : 23;
-  if (m <= 1) return 33 * m;
-  if (m <= 3) return 33 + 47 * ((m - 1) / 2);
-  if (m <= 11) return 80 + r * (m - 3);
-  return 80 + 8 * r + 31 * Math.min(1, m - 11);
-}
-let totalMep = 0;
 function construirRecorrido() {
   const nivelP2 = niveles.findIndex((n) => n.info.nombre === 'PISO 2');
   const elevP2 = niveles[nivelP2]?.info.elev ?? 3;
   const c2 = niveles[nivelP2].caja.getCenter(new THREE.Vector3());
   const cm = cajaMep.isEmpty() ? c2 : centroMep;
   const cp = critico.ok ? critico.p : cm;
-  totalMep = (mepInfo?.cats ?? []).reduce((s, c) => s + c.elementos, 0);
   // estado de apertura: la torre es una nube de escaneo sobre azul Estelar
   Object.assign(S, { nube: 1, noche: 1, ctx: 0, bim: 1, obra: 0, dibujo: 0, mep: 0, az: 48, el: 14, dist: 112, ty: 10 });
   tl = gsap.timeline({ defaults: { ease: 'none' }, paused: true });
   const T = (obj: object, at: number, dur: number, ease = 'none') => tl.to(S, { ...obj, duration: dur, ease }, at);
-
-  // reloj del proyecto
-  T({ mes: 1 }, 10, 15); T({ mes: 3 }, 25, 30); T({ mes: 11 }, 55, 50); T({ mes: 12 }, 105, 20);
 
   // 00 · Escaneo (mes 0): la nube gira despacio
   T({ az: 18, el: 20, dist: 104 }, 0, 10);
@@ -524,8 +510,6 @@ function construirRecorrido() {
     else tl.fromTo(el, { autoAlpha: 0, y: 50 }, { autoAlpha: 1, y: 0, duration: 2, ease: 'power2.out' }, f.t0 + 1);
     if (i < FASES.length - 1) tl.to(el, { autoAlpha: 0, y: -50, duration: 2 }, fin - 2.5);
   });
-  // tablero en vivo: entra al terminar la apertura
-  tl.fromTo('#hudObra', { autoAlpha: 0, x: 40 }, { autoAlpha: 1, x: 0, duration: 3, ease: 'power2.out' }, 8);
   tl.set({}, {}, T_FIN);
 
   $('#marcas').innerHTML = FASES.map((f) => `<li style="top:${(f.t0 / T_FIN) * 100}%">${f.k} · ${f.nombre}</li>`).join('');
@@ -539,40 +523,6 @@ function construirRecorrido() {
       escenaActual = e;
     },
   });
-}
-
-// ── tablero en vivo (HUD) ──
-let hudIntegrada = false;
-const hudCnv = () => document.getElementById('hudCurva') as HTMLCanvasElement | null;
-function pintarHud() {
-  const m = S.mes;
-  const set = (id: string, v: string) => { const el = document.getElementById(id); if (el && el.textContent !== v) el.textContent = v; };
-  set('hMes', String(Math.floor(m)).padStart(2, '0'));
-  const ind = honorarios(m, false), int = honorarios(m, true);
-  set('hInd', '$' + ind.toLocaleString('es-CO', { maximumFractionDigits: 1, minimumFractionDigits: 1 }) + ' M');
-  set('hInt', '$' + int.toLocaleString('es-CO', { maximumFractionDigits: 1, minimumFractionDigits: 1 }) + ' M');
-  set('hMep', Math.round(totalMep * S.dibujo).toLocaleString('es-CO'));
-  set('hNiv', String(Math.round(S.obra * niveles.length)));
-  const fase = m < 0.02 ? 0 : m <= 1 ? 1 : m <= 3 ? 2 : m < 11 ? 3 : 4; // etapa según el reloj del proyecto
-  document.querySelectorAll('#hFases b').forEach((b, i) => { b.classList.toggle('on', i === fase); b.classList.toggle('hecho', i < fase); });
-  // curva de honorarios acumulados, dibujada hasta el mes actual
-  const c = hudCnv(); if (!c) return;
-  const dpr = Math.min(2, devicePixelRatio); const W = c.clientWidth, H = c.clientHeight;
-  if (c.width !== W * dpr) { c.width = W * dpr; c.height = H * dpr; }
-  const x = c.getContext('2d')!; x.setTransform(dpr, 0, 0, dpr, 0, 0); x.clearRect(0, 0, W, H);
-  const P = 6, X = (mm: number) => P + (mm / 12) * (W - 2 * P), Y = (v: number) => H - P - (v / 300) * (H - 2 * P - 10);
-  x.strokeStyle = 'rgba(255,255,255,.08)'; x.lineWidth = 1;
-  for (const k of [1, 3, 11]) { x.beginPath(); x.moveTo(X(k), P); x.lineTo(X(k), H - P); x.stroke(); }
-  const serie = (integ: boolean, color: string, foco: boolean) => {
-    x.beginPath(); for (let mm = 0; mm <= m + 1e-6; mm += 0.05) { const v = honorarios(Math.min(mm, m), integ); mm === 0 ? x.moveTo(X(mm), Y(v)) : x.lineTo(X(mm), Y(v)); }
-    x.lineTo(X(m), Y(honorarios(m, integ)));
-    x.strokeStyle = color; x.lineWidth = foco ? 2.6 : 1.6; x.globalAlpha = foco ? 1 : 0.55; x.shadowColor = color; x.shadowBlur = foco ? 10 : 0; x.stroke();
-    x.shadowBlur = 0;
-    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, color + (foco ? '55' : '22')); g.addColorStop(1, color + '00');
-    x.lineTo(X(m), H - P); x.lineTo(X(0), H - P); x.closePath(); x.fillStyle = g; x.fill(); x.globalAlpha = 1;
-    x.beginPath(); x.arc(X(m), Y(honorarios(m, integ)), foco ? 4.5 : 3, 0, Math.PI * 2); x.fillStyle = '#fff'; x.fill();
-  };
-  serie(true, '#b59535', hudIntegrada); serie(false, '#7fb0ff', !hudIntegrada);
 }
 
 // ───────────────────────── exploración libre (MODO B) ─────────────────────────
@@ -731,11 +681,6 @@ function landing() {
   addEventListener('pointermove', (ev) => { if (modo === 'cine') { U.tpx = ev.clientX / innerWidth - 0.5; U.tpy = ev.clientY / innerHeight - 0.5; } });
   document.querySelectorAll<HTMLElement>('[data-ir]').forEach((b) => b.addEventListener('click', () => irAFase(+b.dataset.ir!)));
   $('#marcas').addEventListener('click', (e) => { const li = (e.target as HTMLElement).closest('li'); if (li) irAFase([...li.parentElement!.children].indexOf(li) + 1); });
-  $('#hModo').addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLElement>('button'); if (!b) return;
-    hudIntegrada = b.dataset.m === 'int';
-    document.querySelectorAll('#hModo button').forEach((x) => x.classList.toggle('on', x === b));
-  });
   // B · disciplinas de las redes
   const pintarDisc = () => {
     $('#chipsDisc').innerHTML = DISCS.filter((d) => Object.entries(CATS).some(([c, v]) => v.disc === d && v.mep && niveles.some((n) => n.mats.has(c)))).map((d) => {
@@ -798,7 +743,6 @@ function frame() {
   document.body.classList.toggle('pasado', pasado);
   if (pasado) { requestAnimationFrame(frame); return; }
   aplicar(E);
-  if (modo === 'cine') pintarHud();
   if (modo === 'cine') camaraDesde(E);
   else { controls.update(); camera.fov = THREE.MathUtils.lerp(35, 5, S.orto); camera.near = 0.5 + 20 * S.orto; camera.far = 4000; camera.updateProjectionMatrix(); }
   actualizarEtiquetas();
