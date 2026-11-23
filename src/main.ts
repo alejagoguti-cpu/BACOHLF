@@ -9,6 +9,9 @@ import { iniciarAnimaciones, iniciarHonorarios, iniciarObra, iniciarActores } fr
 import { iniciarHabitacion } from './hab';
 import { iniciarCarrusel } from './carrusel';
 import { iniciarHero } from './hero';
+import { iniciarCursor } from './cursor';
+import { ico, pintarIconos } from './iconos';
+import './interaccion.css';
 gsap.registerPlugin(ScrollTrigger);
 
 // ───────────────────────── datos ─────────────────────────
@@ -25,6 +28,7 @@ export const CAPAS: { d: Disc; corto: string; color: string; texto: string }[] =
   { d: 'Eléctrica', corto: 'Eléctrica', color: '#2fd0b5', texto: 'Conduit, cajas, tomas, aparatos y luminarias de cada habitación del Piso 2.' },
   { d: 'Mecánica', corto: 'Mecánica', color: '#c3cbd4', texto: 'Ductos de ventilación y extracción coordinados con las demás redes.' },
 ];
+const ICONO_CAPA: Record<string, string> = { Arquitectura: 'arquitectura', Estructura: 'estructura', Hidrosanitaria: 'hidro', 'Red contra incendios': 'rci', 'Eléctrica': 'electrica', 'Mecánica': 'mecanica' };
 const CATS: Record<string, { arq: string; tec: string; disc: Disc; cerr?: boolean; vidrio?: boolean; metal?: number; rough?: number; nombre: string; mep?: boolean }> = {
   muros:      { arq: '#dcae95', tec: '#2a4664', disc: 'Arquitectura', cerr: true, nombre: 'Muros' },
   ventanas:   { arq: '#7f98a6', tec: '#6f93b8', disc: 'Arquitectura', cerr: true, vidrio: true, nombre: 'Ventanas' },
@@ -317,6 +321,7 @@ function buscarPuntoCritico() {
 
 // ───────────────────────── aplicar estado ─────────────────────────
 const tmpC = new THREE.Color(), tmpT = new THREE.Color();
+const HOV = { nivel: -1, cat: '', v: 0, meta: 0 };
 function aplicar(st: Estado) {
   const e = st.explode, nTop = niveles.length - 1, N = niveles.length;
   const tiempo = performance.now() / 1000;
@@ -337,7 +342,9 @@ function aplicar(st: Estado) {
       if (def.cerr || def.disc === 'Arquitectura') op *= THREE.MathUtils.lerp(1, def.vidrio ? 0.18 : 0.1, st.cerr);
       op *= capa * n.vis * solido;
       m.opacity = op; m.transparent = op < 0.999; m.depthWrite = op > 0.6;
-      if (!def.mep) m.emissive.copy(ORO).multiplyScalar(0.55 * destello);
+      const hov = HOV.nivel === i && HOV.cat === cat ? HOV.v * (0.75 + 0.25 * Math.sin(tiempo * 7)) : 0;
+      if (!def.mep) m.emissive.copy(ORO).multiplyScalar(0.55 * destello + 0.7 * hov);
+      else m.emissive.set(def.arq).multiplyScalar(0.55 + 1.2 * hov);
       m.visible = op > 0.005;
       if (m.userData.uMapa) { m.userData.uMapa.value = 1 - bimN; m.normalScale.setScalar(1 - bimN); }
       const ed = n.lineas.get(cat);
@@ -520,6 +527,26 @@ function vista(v: string, capas = true) {
 const ray = new THREE.Raycaster(); const ptr = new THREE.Vector2();
 let downAt = 0;
 canvas.addEventListener('pointerdown', () => { downAt = performance.now(); });
+// pasar el cursor por el modelo: el elemento se enciende y aparece su nombre
+const tip = document.createElement('div'); tip.id = 'tip3d'; document.body.appendChild(tip);
+let ultimoRay = 0;
+let pendiente: number | undefined;
+addEventListener('pointermove', function mover(ev: PointerEvent) {
+  const ahora = performance.now(); if (ahora - ultimoRay < 120) { tip.style.transform = `translate(${ev.clientX + 16}px, ${ev.clientY + 16}px)`; clearTimeout(pendiente); pendiente = window.setTimeout(() => mover(ev), 130); return; }
+  ultimoRay = ahora;
+  const encima = (ev.target as Element).closest?.('.txt, .glass, button, a, .chip, .carrusel, .actores, .nube-chips, #dock, #top, .etapas, #lightbox, .flotantes .fcard');
+  if (matchMedia('(hover: none)').matches || (modo === 'cine' && encima) || !niveles.length) { HOV.meta = 0; tip.classList.remove('on'); return; }
+  ptr.set(ev.clientX / innerWidth * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+  const h = ray.intersectObjects(pickables.filter((m) => (m.material as THREE.Material).visible && (m.material as THREE.MeshStandardMaterial).opacity > 0.25), false).find((x) => x.point.y <= corte.constant + 0.01);
+  if (!h) { HOV.meta = 0; tip.classList.remove('on'); return; }
+  const nv = h.object.userData.nivel as number, cat = h.object.userData.cat as string;
+  if (nv !== HOV.nivel || cat !== HOV.cat) { HOV.nivel = nv; HOV.cat = cat; HOV.v = 0; dispatchEvent(new CustomEvent('destello', { detail: { x: ev.clientX, y: ev.clientY } })); }
+  HOV.meta = 1;
+  tip.innerHTML = `<b>${CATS[cat].nombre}</b>${niveles[nv].info.nombre} · ${CATS[cat].disc}`;
+  tip.style.transform = `translate(${ev.clientX + 16}px, ${ev.clientY + 16}px)`; tip.classList.add('on');
+}, { passive: true });
+
 canvas.addEventListener('pointerup', (ev) => {
   if (modo !== 'libre' || performance.now() - downAt > 300) return;
   ptr.set(ev.clientX / innerWidth * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
@@ -535,7 +562,7 @@ canvas.addEventListener('pointerup', (ev) => {
 
 // ───────────────────────── UI ─────────────────────────
 function ui() {
-  $('#capas').innerHTML = CAPAS.map((c) => `<button class="capa" data-d="${c.d}" style="--c:${c.color}"><i></i>${c.corto}</button>`).join('');
+  $('#capas').innerHTML = CAPAS.map((c) => `<button class="capa" data-d="${c.d}" style="--c:${c.color}">${ico(ICONO_CAPA[c.d])}${c.corto}</button>`).join('');
   $('#capas').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.capa'); if (b) toggleCapa(b.dataset.d as Disc); });
   pintarDock();
   document.querySelectorAll('[data-explorar]').forEach((b) => b.addEventListener('click', entrarLibre));
@@ -555,6 +582,7 @@ addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; cam
 let t0 = performance.now();
 function frame() {
   const now = performance.now(); const dt = Math.min(0.05, (now - t0) / 1000); t0 = now;
+  HOV.v += (HOV.meta - HOV.v) * 0.12;
   const E = { ...S };
   if (modo === 'cine') {
     U.px += (U.tpx - U.px) * 0.04; U.py += (U.tpy - U.py) * 0.04;
@@ -576,11 +604,13 @@ function frame() {
 (async () => {
   const man = await cargar();
   definirEscenas();
-  const etq = document.createElement('div'); etq.className = 'etq'; etq.id = 'etqCritico'; etq.textContent = 'Interferencia · RCI ↔ conduit'; $('#etiquetas').appendChild(etq);
+  const etq = document.createElement('div'); etq.className = 'etq'; etq.id = 'etqCritico'; etq.innerHTML = 'Interferencia · RCI ' + ico('cruce') + ' conduit'; $('#etiquetas').appendChild(etq);
   if (critico.ok) { const txt = (critico.d * 100).toFixed(1).replace('.', ',') + ' cm'; $('#dCritico').textContent = txt; $('#dCritico2').textContent = txt; }
   iniciarHero();
   ui();
   construirCapas();
+  pintarIconos();
+  iniciarCursor();
   iniciarAnimaciones();
   iniciarHonorarios();
   iniciarObra();

@@ -1,5 +1,6 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ico } from './iconos';
 gsap.registerPlugin(ScrollTrigger);
 
 /** Láminas del Piso 2 (las mismas de planosfinales) por especialidad, en carrusel 3D animado. */
@@ -67,7 +68,7 @@ export function iniciarCarrusel(alCambiar?: (s: SetPlanos) => void) {
     const l = LAM[actual];
     chips.querySelectorAll('button').forEach((b) => b.classList.toggle('on', (b as HTMLElement).dataset.h === l.h));
     gsap.fromTo(info, { autoAlpha: 0, y: 10 }, { autoAlpha: 1, y: 0, duration: 0.5 });
-    info.innerHTML = `<b>Habitación ${l.h}</b><span>${l.t}</span><span class="num">${String(actual + 1).padStart(2, '0')} / ${LAM.length}</span><a href="${l.pdf}" target="_blank" rel="noopener">PDF ↗</a>`;
+    info.innerHTML = `<b>Habitación ${l.h}</b><span>${l.t}</span><span class="num">${String(actual + 1).padStart(2, '0')} / ${LAM.length}</span><a href="${l.pdf}" target="_blank" rel="noopener">PDF ${ico('externo')}</a>`;
   }
   const ir = (i: number) => { actual = (i + LAM.length) % LAM.length; pintar(); reiniciar(); };
   const reiniciar = () => { clearInterval(auto); if (visible) auto = window.setInterval(() => { actual = (actual + 1) % LAM.length; pintar(1.1); }, 3800); };
@@ -94,7 +95,7 @@ export function iniciarCarrusel(alCambiar?: (s: SetPlanos) => void) {
   // lámina en grande
   function abrir(i: number) {
     const l = LAM[i];
-    caja.innerHTML = `<div class="lb-top"><b>Habitación ${l.h}</b><span>${l.t}</span><a href="${l.pdf}" target="_blank" rel="noopener">Abrir PDF ↗</a><button class="lb-x" aria-label="Cerrar">✕</button></div><div class="lb-img"><img src="planos/${l.f}-t.webp" alt="" /></div>`;
+    caja.innerHTML = `<div class="lb-top"><b>Habitación ${l.h}</b><span>${l.t}</span><a href="${l.pdf}" target="_blank" rel="noopener">Abrir PDF ${ico('externo')}</a><button class="lb-x" aria-label="Cerrar">${ico('cerrar')}</button></div><div class="lb-img"><img src="planos/${l.f}-t.webp" alt="" /></div>`;
     const img = caja.querySelector('img')!; const hd = new Image(); hd.onload = () => (img.src = hd.src); hd.src = `planos/${l.f}.webp`;
     caja.classList.add('on'); clearInterval(auto);
     gsap.fromTo(caja.querySelector('.lb-img'), { scale: 0.7, rotateX: 25, autoAlpha: 0, transformPerspective: 1200 }, { scale: 1, rotateX: 0, autoAlpha: 1, duration: 0.7, ease: 'power3.out' });

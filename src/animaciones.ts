@@ -1,5 +1,6 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ico } from './iconos';
 gsap.registerPlugin(ScrollTrigger);
 
 const $ = <T extends HTMLElement = HTMLElement>(s: string, r: ParentNode = document) => r.querySelector(s) as T;
@@ -202,7 +203,7 @@ const HITOS = [
   ['02 nov', 'Entrega formal conjunta', 'Recepción consolidada del piso completo.'],
 ];
 export function iniciarObra() {
-  $('#frentes').innerHTML = FRENTES.map((f) => `<div class="glass frente"><b>${f.f}</b><div class="habs">${f.s.map((h) => `<span>${h}</span>`).join('<em>→</em>')}</div></div>`).join('');
+  $('#frentes').innerHTML = FRENTES.map((f) => `<div class="glass frente"><b>${f.f}</b><div class="habs">${f.s.map((h) => `<span>${h}</span>`).join('<em>' + ico('flecha') + '</em>')}</div></div>`).join('');
   $('#hitos').innerHTML = '<i class="traz"></i>' + HITOS.map(([d, h, r]) => `<div class="hito"><time>${d} · 2026</time><b>${h}</b><p>${r}</p></div>`).join('');
   const play = () => {
     const tl = gsap.timeline({ delay: 0.5 });

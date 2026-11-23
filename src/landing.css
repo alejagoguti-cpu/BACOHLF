@@ -108,7 +108,7 @@ h1 b, h2 b { font-weight: 700; color: var(--oro); }
 .checks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .checks span { font-size: 12px; padding: 6px 11px; border-radius: 99px; background: rgba(213,190,145,.1); color: var(--oro); border: 1px solid rgba(213,190,145,.25); opacity: .25; transition: opacity .4s; }
 .checks span.ok { opacity: 1; }
-.checks span.ok::before { content: '✓ '; }
+
 
 /* capas (fijada) */
 .capas-sec { display: block; padding: 0; height: 640vh; }

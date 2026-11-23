@@ -1,0 +1,58 @@
+/* ── íconos planos ── */
+.ico { width: 1.15em; height: 1.15em; flex: none; vertical-align: -0.18em; }
+.ico path, .ico circle { stroke-dasharray: 1; stroke-dashoffset: 0; }
+/* al pasar el cursor el ícono se vuelve a dibujar trazo a trazo */
+:is(.chip, .capa, .btn, .actor, .checks span, .etapa, .fcard, .flecha, .tabs-planos button, .lb-x, .info-lamina a, #vistasLibres button):hover .ico :is(path, circle) { animation: trazar .9s ease-out; }
+@keyframes trazar { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.chip .ico { color: var(--oro); }
+.chip.c-rojo .ico { color: #ff8a77; }
+.chip.s .ico { color: var(--txt2); }
+.mini .ico, .fcard small .ico { color: var(--oro); margin-right: 6px; }
+.fcard em .ico, .alerta b .ico, .alerta-mini b .ico { color: var(--oro); vertical-align: -0.2em; }
+.checks span { display: inline-flex; align-items: center; gap: 6px; }
+.checks span.ok::before { content: none; }
+.checks span .ico { width: 14px; height: 14px; }
+.etapa .et-ico { position: absolute; top: 64px; right: 22px; width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px;
+  color: var(--oro); background: rgba(213,190,145,.08); border: 1px solid rgba(213,190,145,.25); transition: background .4s, box-shadow .4s; }
+.etapa .et-ico .ico { width: 24px; height: 24px; }
+.etapa:hover .et-ico { background: rgba(213,190,145,.2); box-shadow: 0 0 30px -4px rgba(213,190,145,.6); }
+.actor { display: inline-flex; align-items: center; gap: 10px; }
+.actor .ico { color: var(--oro); width: 20px; height: 20px; }
+.actor.oro .ico { color: #fff; }
+.capa .ico { width: 15px; height: 15px; color: var(--c); opacity: .55; transition: opacity .3s; }
+.capa.on .ico { opacity: 1; filter: drop-shadow(0 0 6px var(--c)); }
+.capa i { display: none; }
+.flecha { display: grid; place-items: center; }
+.flecha .ico { width: 24px; height: 24px; }
+.btn .ico, .salir .ico, .info-lamina a .ico, .lb-top a .ico { width: 15px; height: 15px; vertical-align: -0.15em; }
+.lb-x { display: grid; place-items: center; }
+.frente .habs em .ico { width: 14px; height: 14px; color: var(--oro); }
+.ctas-hero .btn span { display: inline-flex; vertical-align: middle; }
+
+/* ── cursor con destello ── */
+#chispas { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 90; pointer-events: none; }
+#halo { position: fixed; left: 0; top: 0; z-index: 89; width: 300px; height: 300px; margin: -150px 0 0 -150px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(213,190,145,.20), rgba(213,190,145,.06) 40%, transparent 70%); mix-blend-mode: screen; transition: width .4s, height .4s, margin .4s; }
+#punto { position: fixed; left: 0; top: 0; z-index: 91; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; pointer-events: none;
+  background: #fff; box-shadow: 0 0 12px 3px rgba(213,190,145,.9); transition: width .3s, height .3s, margin .3s, background .3s; }
+body.cursor-sobre #punto { width: 36px; height: 36px; margin: -18px 0 0 -18px; background: transparent; border: 1.5px solid var(--oro); box-shadow: 0 0 18px rgba(213,190,145,.6), inset 0 0 10px rgba(213,190,145,.4); }
+body.cursor-sobre #halo { width: 420px; height: 420px; margin: -210px 0 0 -210px; }
+
+/* barrido de luz al pasar el cursor por botones, chips y tarjetas */
+:where(.btn, .chip, .capa, .tabs-planos button, .seg button, .btn-explorar) { position: relative; }
+:is(.btn, .chip, .capa, .glass, .tabs-planos button, .seg button, .btn-explorar)::before { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 1;
+  background: linear-gradient(105deg, transparent 35%, rgba(255,244,214,.55) 50%, transparent 65%) no-repeat; background-size: 250% 100%; background-position: 160% 0; opacity: 0; }
+.brilla::before { animation: barrido .9s cubic-bezier(.3,.7,.3,1); }
+@keyframes barrido { 0% { background-position: 160% 0; opacity: 1; } 100% { background-position: -60% 0; opacity: 1; } }
+/* la tarjeta bajo el cursor se enciende en el borde */
+.glass:hover { border-color: rgba(213,190,145,.45); box-shadow: 0 30px 80px -30px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.14), 0 0 40px -12px rgba(213,190,145,.45); }
+.chip { transition: border-color .3s, box-shadow .3s, background .3s; }
+.chip:hover { border-color: var(--oro); box-shadow: 0 0 24px -4px rgba(213,190,145,.55); background: rgba(213,190,145,.12); }
+.lamina:hover { box-shadow: 0 50px 110px -30px rgba(0,0,0,.9), 0 0 0 1px rgba(213,190,145,.8), 0 0 70px -6px rgba(213,190,145,.5); }
+
+/* etiqueta de lo que está bajo el cursor en el modelo 3D */
+#tip3d { position: fixed; left: 0; top: 0; z-index: 40; pointer-events: none; padding: 7px 12px; border-radius: 10px; font-size: 12px; white-space: nowrap;
+  background: rgba(16,29,44,.85); border: 1px solid rgba(213,190,145,.45); color: #fff; backdrop-filter: blur(10px); opacity: 0; transform: translate(16px, 16px); transition: opacity .25s; }
+#tip3d b { color: var(--oro); font-weight: 600; margin-right: 6px; }
+#tip3d.on { opacity: 1; }
+@media (hover: none) { #tip3d { display: none; } }

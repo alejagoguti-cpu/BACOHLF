@@ -33,7 +33,7 @@
     <button data-v="rx">Rayos X</button>
     <button data-v="exp">Explotar</button>
     <button data-v="p2">Piso 2</button>
-    <button data-v="salir" class="salir">Salir ✕</button>
+    <button data-v="salir" class="salir">Salir <i data-i="cerrar"></i></button>
   </div>
 </nav>
 
@@ -47,7 +47,7 @@
       <p class="rota" data-a="up">Un modelo para <span id="rota">coordinar los diseños</span></p>
       <p class="lead" data-a="up">BACO Studio gestiona la información y la coordinación BIM de la remodelación: de las condiciones existentes LOD 300 a la coordinación LOD 400, la obra y el gemelo digital.</p>
       <div class="ctas-hero" data-a="stagger">
-        <button class="btn oro" data-ir="capas">Ver las 6 capas <span>↓</span></button>
+        <button class="btn oro" data-ir="capas">Ver las 6 capas <span><i data-i="abajo"></i></span></button>
         <button class="btn" data-explorar>Explorar el modelo 3D</button>
       </div>
       <div class="stats" data-a="stagger">
@@ -58,14 +58,14 @@
     </div>
     <div class="flotantes" aria-hidden="true">
       <div class="fl fl1" data-p="1.4"><div class="flt"><div class="glass fcard" data-a="fly">
-        <small>✦ Condiciones existentes</small><b>LOD 300 <em>→</em> LOD 400</b><div class="mini-barra"><i></i></div><span class="ok">Revisión técnica de la entrega</span>
+        <small><i data-i="chispa"></i>Condiciones existentes</small><b>LOD 300 <em><i data-i="flecha"></i></em> LOD 400</b><div class="mini-barra"><i></i></div><span class="ok">Revisión técnica de la entrega</span>
       </div></div></div>
       <div class="fl fl2" data-p="2.2"><div class="flt"><div class="glass fcard" data-a="fly">
         <small>Capas federadas</small>
         <ul class="dots"><li style="--c:#D5BE91">Arq.</li><li style="--c:#9fb6cc">Estr.</li><li style="--c:#3d8bff">Hidro</li><li style="--c:#ff7a2f">RCI</li><li style="--c:#2fd0b5">Eléc.</li><li style="--c:#c3cbd4">Mec.</li></ul>
       </div></div></div>
       <div class="fl fl3" data-p="1.8"><div class="flt"><div class="glass fcard alerta-mini" data-a="fly">
-        <span class="punto"></span><div><small>Interferencia · Piso 2</small><b>RCI ↔ conduit · <strong id="dCritico2">—</strong></b></div>
+        <span class="punto"></span><div><small>Interferencia · Piso 2</small><b>RCI <i data-i="cruce"></i> conduit · <strong id="dCritico2">—</strong></b></div>
       </div></div></div>
       <div class="fl fl4" data-p="1"><div class="flt"><div class="glass fcard" data-a="fly">
         <small>Ya en obra · Piso 2</small><b>12 habitaciones · 3 frentes</b>
@@ -83,10 +83,10 @@
       <p class="lead" data-a="up">Ordenar las obligaciones de cada especialista, reducir interferencias de diseño y mantener la trazabilidad de los cambios hasta la entrega del activo digital.</p>
     </div>
     <div class="nube-chips" data-a="chips">
-      <span class="chip c-rojo">Interferencias</span><span class="chip">RFI</span><span class="chip">Cambios de campo</span>
-      <span class="chip">Versiones vigentes</span><span class="chip c-oro">Condiciones ocultas</span><span class="chip">Alturas libres</span>
-      <span class="chip">Pasos de instalaciones</span><span class="chip">Accesos de mantenimiento</span><span class="chip c-oro">Constructibilidad</span>
-      <span class="chip">Registros</span>
+      <span class="chip c-rojo"><i data-i="interferencia"></i>Interferencias</span><span class="chip"><i data-i="rfi"></i>RFI</span><span class="chip"><i data-i="cambios"></i>Cambios de campo</span>
+      <span class="chip"><i data-i="versiones"></i>Versiones vigentes</span><span class="chip c-oro"><i data-i="ocultas"></i>Condiciones ocultas</span><span class="chip"><i data-i="alturas"></i>Alturas libres</span>
+      <span class="chip"><i data-i="pasos"></i>Pasos de instalaciones</span><span class="chip"><i data-i="mantenimiento"></i>Accesos de mantenimiento</span><span class="chip c-oro"><i data-i="constructibilidad"></i>Constructibilidad</span>
+      <span class="chip"><i data-i="registros"></i>Registros</span>
     </div>
   </section>
 
@@ -97,11 +97,11 @@
       <h2 data-a="words">Partimos de lo que <b>existe</b></h2>
       <p class="lead" data-a="up">El escaneo 3D y el modelo de condiciones existentes LOD 300 los ejecuta un proveedor independiente contratado por el propietario. BACO revisa técnicamente la entrega.</p>
       <div class="glass leyendo" data-a="fly">
-        <p class="mini">✦ Revisando entrega LOD 300…</p>
+        <p class="mini"><i data-i="chispa"></i>Revisando entrega LOD 300</p>
         <b class="pct" data-n="100" data-suf="%">0</b>
         <div class="barra"><i></i></div>
         <div class="checks">
-          <span>Archivos</span><span>Coordenadas</span><span>Consistencia geométrica</span><span>Zonas no verificadas</span><span>Observaciones</span>
+          <span><i data-i="archivo"></i>Archivos</span><span><i data-i="coordenadas"></i>Coordenadas</span><span><i data-i="cubo3d"></i>Consistencia geométrica</span><span><i data-i="alerta"></i>Zonas no verificadas</span><span><i data-i="nota"></i>Observaciones</span>
         </div>
       </div>
     </div>
@@ -127,7 +127,7 @@
       <h2 data-a="words">El conflicto aparece en el <b>modelo</b>, no en la obra</h2>
       <div class="glass alerta" data-a="fly">
         <span class="punto"></span>
-        <div><small>Interferencia detectada · Piso 2</small><b>Red contra incendios ↔ conduit</b><p>Separación mínima medida en el modelo de redes: <strong id="dCritico">—</strong></p></div>
+        <div><small>Interferencia detectada · Piso 2</small><b>Red contra incendios <i data-i="cruce"></i> conduit</b><p>Separación mínima medida en el modelo de redes: <strong id="dCritico">—</strong></p></div>
       </div>
       <div class="chat">
         <div class="glass msg" data-a="msg"><i>BIM</i><p>Interferencia entre rociador y conduit en Piso 2. Queda asignada en la mesa técnica.</p></div>
@@ -145,10 +145,10 @@
       <h2 data-a="words">Cuatro etapas. <b>12 meses.</b></h2>
     </div>
     <div class="etapas">
-      <article class="glass etapa" data-a="flip" data-tilt><span class="letra">A</span><small>1 mes</small><h3>Estructuración BIM y contratación</h3><p>BEP marco y operativo, requisitos EIR/AIR, matriz LOD 400, protocolo CDE y anexos de contratación.</p><em>Obligaciones BIM integradas a contratos</em></article>
-      <article class="glass etapa" data-a="flip" data-tilt><span class="letra">B</span><small>2 meses</small><h3>Coordinación de diseños</h3><p>Federación de modelos, mesas técnicas, control de interferencias y registro de incidencias.</p><em>Trazabilidad de conflictos y decisiones</em></article>
-      <article class="glass etapa" data-a="flip" data-tilt><span class="letra">C</span><small>8 meses</small><h3>Acompañamiento de obra</h3><p>Mesa BIM semanal, RFI y cambios, revisión LOD 400 de instalación e informe mensual.</p><em>Vigencia documental en obra</em></article>
-      <article class="glass etapa" data-a="flip" data-tilt><span class="letra">D</span><small>1 mes</small><h3>Cierre digital</h3><p>Federado as-built, planos récord, inventario de equipos y paquete de activos digitales.</p><em>Acta de transferencia</em></article>
+      <article class="glass etapa" data-a="flip" data-tilt><span class="letra">A</span><span class="et-ico"><i data-i="plano"></i></span><small>1 mes</small><h3>Estructuración BIM y contratación</h3><p>BEP marco y operativo, requisitos EIR/AIR, matriz LOD 400, protocolo CDE y anexos de contratación.</p><em>Obligaciones BIM integradas a contratos</em></article>
+      <article class="glass etapa" data-a="flip" data-tilt><span class="letra">B</span><span class="et-ico"><i data-i="capas"></i></span><small>2 meses</small><h3>Coordinación de diseños</h3><p>Federación de modelos, mesas técnicas, control de interferencias y registro de incidencias.</p><em>Trazabilidad de conflictos y decisiones</em></article>
+      <article class="glass etapa" data-a="flip" data-tilt><span class="letra">C</span><span class="et-ico"><i data-i="casco"></i></span><small>8 meses</small><h3>Acompañamiento de obra</h3><p>Mesa BIM semanal, RFI y cambios, revisión LOD 400 de instalación e informe mensual.</p><em>Vigencia documental en obra</em></article>
+      <article class="glass etapa" data-a="flip" data-tilt><span class="letra">D</span><span class="et-ico"><i data-i="gemelo"></i></span><small>1 mes</small><h3>Cierre digital</h3><p>Federado as-built, planos récord, inventario de equipos y paquete de activos digitales.</p><em>Acta de transferencia</em></article>
     </div>
   </section>
 
@@ -179,7 +179,7 @@
     <div class="glass hab-frame" data-a="tilt">
       <canvas id="hab"></canvas>
       <div class="hab-carga" id="habCarga"><span></span>Cargando habitación 216 · 3ds Max</div>
-      <div class="hab-tags" data-a="stagger"><span class="chip">LOD 400</span><span class="chip">Baño incluido</span><span class="chip">Texturas reales</span></div>
+      <div class="hab-tags" data-a="stagger"><span class="chip"><i data-i="cubo3d"></i>LOD 400</span><span class="chip"><i data-i="hidro"></i>Baño incluido</span><span class="chip"><i data-i="capas"></i>Texturas reales</span></div>
     </div>
   </section>
 
@@ -192,9 +192,9 @@
     </div>
     <div class="tabs-planos" id="tabsPlanos" data-a="stagger"></div>
     <div class="carrusel">
-      <button class="flecha" id="cPrev" aria-label="Anterior">‹</button>
+      <button class="flecha" id="cPrev" aria-label="Anterior"><i data-i="izq"></i></button>
       <div class="pista" id="pista"></div>
-      <button class="flecha der" id="cNext" aria-label="Siguiente">›</button>
+      <button class="flecha der" id="cNext" aria-label="Siguiente"><i data-i="der"></i></button>
     </div>
     <div class="glass info-lamina" id="infoLamina" data-a="pop"></div>
     <div class="habs-carrusel" id="habsCarrusel" data-a="stagger"></div>
@@ -208,11 +208,11 @@
       <p class="lead" data-a="up">Toca un actor para ver su responsabilidad contractual.</p>
     </div>
     <div class="actores" data-a="pills">
-      <button class="glass actor" data-r="Levantamiento 3D y entrega del modelo de condiciones existentes LOD 300 y soportes acordados.">Proveedor de escaneo</button>
-      <button class="glass actor" data-r="Desarrollar, revisar y aprobar técnicamente sus modelos por especialidad, en LOD 400 según matriz pactada.">Diseñadores / especialistas</button>
-      <button class="glass actor oro" data-r="Establecer requisitos, administrar BEP/CDE, coordinar, verificar entregas e integrar el cierre digital.">BACO STUDIO</button>
-      <button class="glass actor" data-r="Mantener modelos de fabricación/instalación, documentar cambios y suministrar as-built y datos de equipos.">Contratistas / fabricantes</button>
-      <button class="glass actor" data-r="Contratar a responsables, tomar decisiones de aprobación, exigir cumplimiento y recibir los entregables.">Propietario / gerencia</button>
+      <button class="glass actor" data-r="Levantamiento 3D y entrega del modelo de condiciones existentes LOD 300 y soportes acordados."><i data-i="escaner"></i><span>Proveedor de escaneo</span></button>
+      <button class="glass actor" data-r="Desarrollar, revisar y aprobar técnicamente sus modelos por especialidad, en LOD 400 según matriz pactada."><i data-i="diseno"></i><span>Diseñadores / especialistas</span></button>
+      <button class="glass actor oro" data-r="Establecer requisitos, administrar BEP/CDE, coordinar, verificar entregas e integrar el cierre digital."><i data-i="red"></i><span>BACO STUDIO</span></button>
+      <button class="glass actor" data-r="Mantener modelos de fabricación/instalación, documentar cambios y suministrar as-built y datos de equipos."><i data-i="casco"></i><span>Contratistas / fabricantes</span></button>
+      <button class="glass actor" data-r="Contratar a responsables, tomar decisiones de aprobación, exigir cumplimiento y recibir los entregables."><i data-i="propietario"></i><span>Propietario / gerencia</span></button>
       <span class="chip s">ISO 19650-1 · 19650-2</span><span class="chip s">BIMForum LOD 2025</span><span class="chip s">IFC</span><span class="chip s">BEP</span><span class="chip s">EIR / AIR</span><span class="chip s">CDE</span>
     </div>
     <div class="glass resp" id="resp" data-a="fly"><small>Responsabilidad</small><p>Establecer requisitos, administrar BEP/CDE, coordinar, verificar entregas e integrar el cierre digital.</p></div>
@@ -244,11 +244,11 @@
       <p class="k" data-a="up">11 · Cierre digital</p>
       <h2 data-a="words">Un gemelo listo para <b>operar</b></h2>
       <div class="glass leyendo" data-a="fly">
-        <p class="mini">✦ Consolidando modelo federado as-built…</p>
+        <p class="mini"><i data-i="chispa"></i>Consolidando modelo federado as-built</p>
         <b class="pct" data-n="100" data-suf="%">0</b>
         <div class="barra"><i></i></div>
         <div class="checks">
-          <span>Fichas técnicas</span><span>Manuales</span><span>Garantías</span><span>Fabricante y serie</span><span>Ubicación</span><span>Fecha de instalación</span><span>Mantenimiento</span>
+          <span><i data-i="archivo"></i>Fichas técnicas</span><span><i data-i="manual"></i>Manuales</span><span><i data-i="garantia"></i>Garantías</span><span><i data-i="etiqueta"></i>Fabricante y serie</span><span><i data-i="ubicacion"></i>Ubicación</span><span><i data-i="calendario"></i>Fecha de instalación</span><span><i data-i="mantenimiento"></i>Mantenimiento</span>
         </div>
       </div>
       <p class="nota" data-a="up">Modelo informacional del activo. No incluye integración viva con sensores, BMS, IoT ni CMMS/CAFM.</p>
