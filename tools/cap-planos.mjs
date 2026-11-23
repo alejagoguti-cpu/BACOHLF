@@ -8,7 +8,8 @@ const top = await p.evaluate(() => document.querySelector('[data-escena="planos"
 for (const y of [top - 900, top - 400, top + 40]) { await p.evaluate((y) => scrollTo(0, y), y); await new Promise((r) => setTimeout(r, 700)); }
 await new Promise((r) => setTimeout(r, 1200)); await p.screenshot({ path: `tools/cap/pl_${W}_a.jpg`, quality: 70 });
 await new Promise((r) => setTimeout(r, 3500)); await p.screenshot({ path: `tools/cap/pl_${W}_b.jpg`, quality: 70 });
-await p.click('#cNext').catch(() => {}); await new Promise((r) => setTimeout(r, 300)); await p.screenshot({ path: `tools/cap/pl_${W}_c.jpg`, quality: 70 });
+await p.click('#tabsPlanos [data-s="agua"]'); await new Promise((r) => setTimeout(r, 3500)); await p.screenshot({ path: `tools/cap/pl_${W}_c.jpg`, quality: 70 });
+await p.click('#tabsPlanos [data-s="san"]'); await new Promise((r) => setTimeout(r, 3500)); await p.screenshot({ path: `tools/cap/pl_${W}_e.jpg`, quality: 70 });
 await new Promise((r) => setTimeout(r, 1200));
 await p.evaluate(() => document.querySelector('.lamina.on').click()); await new Promise((r) => setTimeout(r, 2500));
 await p.screenshot({ path: `tools/cap/pl_${W}_d.jpg`, quality: 70 });

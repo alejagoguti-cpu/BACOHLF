@@ -8,6 +8,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { iniciarAnimaciones, iniciarHonorarios, iniciarObra, iniciarActores } from './animaciones';
 import { iniciarHabitacion } from './hab';
 import { iniciarCarrusel } from './carrusel';
+import { iniciarHero } from './hero';
 gsap.registerPlugin(ScrollTrigger);
 
 // ───────────────────────── datos ─────────────────────────
@@ -406,7 +407,7 @@ function definirEscenas() {
   const P2: Partial<Estado> = { verHasta: ip2, corteY: e2 + 2.75, cerr: 0.92, bim: 1, bordes: 0.18, ctx: 0, ty: e2 + 1.5, tx: cm.x, tz: cm.z, explode: 0, nube: 0, obra: 1 };
   const ARQ: Disc[] = ['Arquitectura', 'Estructura'];
   ESC = {
-    hero: { st: { az: 38, el: 14, dist: 125, ty: 10, tx: 0, tz: 0, ctx: 1, shift: 0.16 }, capas: ARQ },
+    hero: { st: { az: 38, el: 15, dist: 158, ty: 12, tx: 0, tz: 0, ctx: 1, shift: 0.24 }, capas: ARQ },
     problema: { st: { bim: 1, bordes: 0.55, cerr: 0.55, az: -40, el: 22, dist: 150, ctx: 0.12, shift: 0 }, capas: ['Arquitectura', 'Estructura', 'Hidrosanitaria', 'Eléctrica', 'Red contra incendios'], velo: 'centro' },
     escaneo: { st: { nube: 1, bim: 1, ctx: 0, az: 70, el: 16, dist: 108, shift: 0.16 }, capas: ARQ },
     critico: { st: { ...P2, tx: cp.x, ty: cp.y, tz: cp.z, dist: 8, el: 34, az: 40, alerta: 1, shift: 0.18 }, capas: ['Arquitectura', 'Red contra incendios', 'Eléctrica'] },
@@ -426,8 +427,10 @@ function definirEscenas() {
     ...MEP_D.map((d, k) => ({ d, st: { ...P2, ...camP2[k], shift: -0.14 }, capas: ['Arquitectura', 'Estructura', d] as Disc[] })),
   );
 }
+let introHecha = false;
 function irA(nombre: string) {
   const e = ESC[nombre]; if (!e || modo !== 'cine') return;
+  if (nombre === 'hero' && !introHecha) { introHecha = true; return; }
   gsap.to(S, { ...BASE, alerta: 0, ...e.st, duration: 1.9, ease: 'power3.inOut', overwrite: 'auto' });
   setCapas(e.capas);
   document.body.dataset.velo = e.velo ?? '';
@@ -574,7 +577,8 @@ function frame() {
   const man = await cargar();
   definirEscenas();
   const etq = document.createElement('div'); etq.className = 'etq'; etq.id = 'etqCritico'; etq.textContent = 'Interferencia · RCI ↔ conduit'; $('#etiquetas').appendChild(etq);
-  if (critico.ok) $('#dCritico').textContent = (critico.d * 100).toFixed(1).replace('.', ',') + ' cm';
+  if (critico.ok) { const txt = (critico.d * 100).toFixed(1).replace('.', ',') + ' cm'; $('#dCritico').textContent = txt; $('#dCritico2').textContent = txt; }
+  iniciarHero();
   ui();
   construirCapas();
   iniciarAnimaciones();
@@ -582,12 +586,18 @@ function frame() {
   iniciarObra();
   iniciarActores();
   iniciarHabitacion();
-  iniciarCarrusel();
+  iniciarCarrusel((s) => { // el modelo acompaña la especialidad del carrusel
+    if (modo !== 'cine') return;
+    if (s === 'arq') { setCapas(['Arquitectura', 'Estructura']); gsap.to(S, { cerr: 0, bordes: 0.7, duration: 1 }); }
+    else { setCapas(['Arquitectura', 'Hidrosanitaria']); gsap.to(S, { cerr: 0.92, bordes: 0.2, dist: 60, el: 70, duration: 1.4, ease: 'power3.inOut' }); }
+  });
   $('#cargando i b').style.width = '100%';
   setTimeout(() => $('#cargando').classList.add('fin'), 250);
   frame();
   // apertura: la nube de escaneo se solidifica en el edificio
-  gsap.to(S, { nube: 0, duration: 3.2, delay: 0.6, ease: 'power2.inOut' });
+  Object.assign(S, { ...ESC.hero.st, nube: 1 });
+  gsap.from(S, { az: 120, el: 58, dist: 260, ty: 22, duration: 5, ease: 'power3.inOut', delay: 0.2 });
+  gsap.to(S, { nube: 0, duration: 3.4, delay: 1.4, ease: 'power2.inOut' });
   setCapas(['Arquitectura', 'Estructura'], 0);
   cargarContexto(man.enu).catch((e) => console.warn('contexto', e));
   ScrollTrigger.refresh();

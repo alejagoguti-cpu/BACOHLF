@@ -2,23 +2,53 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
-/** Láminas arquitectónicas del Piso 2 (mismas de planosfinales), en carrusel 3D animado. */
+/** Láminas del Piso 2 (las mismas de planosfinales) por especialidad, en carrusel 3D animado. */
 const HABS = ['214', '215', '216', '217', '218', '219', '220', '221', '222', '223', '224', '225'];
 const CON_PRES = ['215', '216', '217', '218', '219', '220', '221', '222'];
-const PDF = (h: string) => `https://alejagoguti-cpu.github.io/planosfinales/assets/planos/arquitectonico/HLF-${h}-arquitectonico.pdf`;
-const LAM = HABS.flatMap((h) => CON_PRES.includes(h)
-  ? [{ h, f: `arq-${h}-presentacion`, t: 'Planta, sección y 3D' }, { h, f: `arq-${h}-1`, t: 'Planta arquitectónica y amoblamiento' }]
-  : [{ h, f: `arq-${h}-1`, t: 'Planta arquitectónica y amoblamiento' }, { h, f: `arq-${h}-2`, t: h === '214' ? 'Pisos, enchapes y cielos' : 'Pisos, enchapes y cielos' }]);
+const BASE_PF = 'https://alejagoguti-cpu.github.io/planosfinales/assets/planos/';
+type Lam = { h: string; f: string; t: string; pdf: string };
+export type SetPlanos = 'arq' | 'agua' | 'san';
+const SETS: Record<SetPlanos, { nombre: string; color: string; lam: Lam[] }> = {
+  arq: { nombre: 'Arquitectónico', color: '#D5BE91', lam: HABS.flatMap((h) => {
+    const pdf = BASE_PF + `arquitectonico/HLF-${h}-arquitectonico.pdf`;
+    return CON_PRES.includes(h)
+      ? [{ h, f: `arq-${h}-presentacion`, t: 'Planta, sección y 3D', pdf }, { h, f: `arq-${h}-1`, t: 'Planta arquitectónica y amoblamiento', pdf }]
+      : [{ h, f: `arq-${h}-1`, t: 'Planta arquitectónica y amoblamiento', pdf }, { h, f: `arq-${h}-2`, t: 'Pisos, enchapes y cielos', pdf }];
+  }) },
+  agua: { nombre: 'Agua fría y caliente', color: '#3d8bff', lam: HABS.map((h) => ({ h, f: `agu-${h}-1`, t: 'Red de agua fría y caliente · planta, axonometría y detalles', pdf: BASE_PF + `agua/HLF-${h}-agua.pdf` })) },
+  san: { nombre: 'Desagües', color: '#c08a52', lam: HABS.map((h) => ({ h, f: `san-${h}-1`, t: 'Red sanitaria (desagües) · planta, axonometría y detalles', pdf: BASE_PF + `desagues/HLF-${h}-desagues.pdf` })) },
+};
 
-export function iniciarCarrusel() {
+export function iniciarCarrusel(alCambiar?: (s: SetPlanos) => void) {
   const pista = document.getElementById('pista')!;
   const chips = document.getElementById('habsCarrusel')!;
   const info = document.getElementById('infoLamina')!;
   const caja = document.getElementById('lightbox')!;
-  pista.innerHTML = LAM.map((l, i) => `<figure class="lamina" data-i="${i}"><img data-src="planos/${l.f}-t.webp" alt="Habitación ${l.h} · ${l.t}" draggable="false" /><figcaption><b>${l.h}</b>${l.t}</figcaption></figure>`).join('');
+  const tabs = document.getElementById('tabsPlanos')!;
+  tabs.innerHTML = (Object.keys(SETS) as SetPlanos[]).map((k) => `<button data-s="${k}" style="--c:${SETS[k].color}" class="${k === 'arq' ? 'on' : ''}"><i></i>${SETS[k].nombre}<small>${SETS[k].lam.length}</small></button>`).join('');
   chips.innerHTML = HABS.map((h) => `<button data-h="${h}">${h}</button>`).join('');
-  const cartas = [...pista.querySelectorAll<HTMLElement>('.lamina')];
+  let set: SetPlanos = 'arq';
+  let LAM = SETS.arq.lam;
+  let cartas: HTMLElement[] = [];
+  const construir = () => {
+    pista.innerHTML = LAM.map((l, i) => `<figure class="lamina" data-i="${i}" style="--c:${SETS[set].color}"><img data-src="planos/${l.f}-t.webp" alt="Habitación ${l.h} · ${l.t}" draggable="false" /><figcaption><b>${l.h}</b>${l.t}</figcaption></figure>`).join('');
+    cartas = [...pista.querySelectorAll<HTMLElement>('.lamina')];
+  };
+  construir();
   let actual = 0, auto: number | undefined, visible = false;
+  // cambiar de especialidad: las láminas actuales se van girando y llegan las nuevas en abanico
+  tabs.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLElement>('button'); if (!b || b.dataset.s === set) return;
+    const nuevo = b.dataset.s as SetPlanos; const hab = LAM[actual]?.h;
+    tabs.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+    clearInterval(auto);
+    gsap.to(cartas, { autoAlpha: 0, rotateX: -70, y: 160, z: -500, duration: 0.45, stagger: 0.012, ease: 'power2.in', overwrite: true, onComplete: () => {
+      set = nuevo; LAM = SETS[set].lam; construir();
+      actual = Math.max(0, LAM.findIndex((l) => l.h === hab));
+      entrada(); reiniciar();
+    } });
+    alCambiar?.(nuevo);
+  });
 
   const cargar = (i: number) => { const img = cartas[(i + LAM.length) % LAM.length]?.querySelector('img'); if (img && img.dataset.src) { img.src = img.dataset.src; delete img.dataset.src; } };
   function pintar(dur = 0.9) {
@@ -37,7 +67,7 @@ export function iniciarCarrusel() {
     const l = LAM[actual];
     chips.querySelectorAll('button').forEach((b) => b.classList.toggle('on', (b as HTMLElement).dataset.h === l.h));
     gsap.fromTo(info, { autoAlpha: 0, y: 10 }, { autoAlpha: 1, y: 0, duration: 0.5 });
-    info.innerHTML = `<b>Habitación ${l.h}</b><span>${l.t}</span><span class="num">${String(actual + 1).padStart(2, '0')} / ${LAM.length}</span><a href="${PDF(l.h)}" target="_blank" rel="noopener">PDF ↗</a>`;
+    info.innerHTML = `<b>Habitación ${l.h}</b><span>${l.t}</span><span class="num">${String(actual + 1).padStart(2, '0')} / ${LAM.length}</span><a href="${l.pdf}" target="_blank" rel="noopener">PDF ↗</a>`;
   }
   const ir = (i: number) => { actual = (i + LAM.length) % LAM.length; pintar(); reiniciar(); };
   const reiniciar = () => { clearInterval(auto); if (visible) auto = window.setInterval(() => { actual = (actual + 1) % LAM.length; pintar(1.1); }, 3800); };
@@ -64,7 +94,7 @@ export function iniciarCarrusel() {
   // lámina en grande
   function abrir(i: number) {
     const l = LAM[i];
-    caja.innerHTML = `<div class="lb-top"><b>Habitación ${l.h}</b><span>${l.t}</span><a href="${PDF(l.h)}" target="_blank" rel="noopener">Abrir PDF ↗</a><button class="lb-x" aria-label="Cerrar">✕</button></div><div class="lb-img"><img src="planos/${l.f}-t.webp" alt="" /></div>`;
+    caja.innerHTML = `<div class="lb-top"><b>Habitación ${l.h}</b><span>${l.t}</span><a href="${l.pdf}" target="_blank" rel="noopener">Abrir PDF ↗</a><button class="lb-x" aria-label="Cerrar">✕</button></div><div class="lb-img"><img src="planos/${l.f}-t.webp" alt="" /></div>`;
     const img = caja.querySelector('img')!; const hd = new Image(); hd.onload = () => (img.src = hd.src); hd.src = `planos/${l.f}.webp`;
     caja.classList.add('on'); clearInterval(auto);
     gsap.fromTo(caja.querySelector('.lb-img'), { scale: 0.7, rotateX: 25, autoAlpha: 0, transformPerspective: 1200 }, { scale: 1, rotateX: 0, autoAlpha: 1, duration: 0.7, ease: 'power3.out' });
