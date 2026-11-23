@@ -56,3 +56,32 @@ body.cursor-sobre #halo { width: 420px; height: 420px; margin: -210px 0 0 -210px
 #tip3d b { color: var(--oro); font-weight: 600; margin-right: 6px; }
 #tip3d.on { opacity: 1; }
 @media (hover: none) { #tip3d { display: none; } }
+
+/* etapas explícitas */
+.etapa .letra { display: flex; flex-direction: column; }
+.et-k { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--txt2); font-weight: 600; margin-bottom: 2px; }
+.etapa .et-ico { top: 78px; }
+.barra-et { grid-template-columns: 56px 1fr 120px; align-items: end; }
+.barra-et b { display: flex; flex-direction: column; line-height: 1; font-size: 24px; }
+.barra-et b small { font-size: 9.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--txt2); font-weight: 600; margin-bottom: 4px; }
+.barra-et .nom em { display: block; font-style: normal; font-size: 13px; color: #fff; margin-bottom: 6px; }
+.barra-et span { padding-bottom: 0; align-self: end; }
+
+/* capas: texto angosto a la izquierda, tarjeta a la derecha, el modelo libre en el centro */
+.capas-sec .txt { max-width: min(440px, 30vw); }
+.capas-sec h2 { font-size: clamp(38px, 4.2vw, 66px); }
+.capas-sec .lead { font-size: 15px; }
+.tarjetas-capa { width: min(360px, 24vw); }
+@media (max-width: 900px) { .capas-sec .txt { max-width: 100%; } .tarjetas-capa { width: 100%; } }
+
+/* fondo más azul (azul profundo de la paleta) para leer mejor */
+html, body { background: #00234C; }
+#glow { background: radial-gradient(120% 90% at 50% 115%, #0b3f80 0%, #00234C 48%, #0b2142 100%); }
+#velo { background: linear-gradient(90deg, rgba(0,35,76,.9) 0%, rgba(0,35,76,.6) 40%, rgba(0,35,76,.18) 64%, rgba(0,35,76,.08) 100%); }
+body[data-velo="centro"] #velo { background: radial-gradient(75% 65% at 50% 50%, rgba(0,35,76,.86), rgba(0,35,76,.45)); }
+#top::before { background: linear-gradient(180deg, rgba(0,35,76,.95) 0%, rgba(0,35,76,.8) 55%, rgba(0,35,76,0) 100%); }
+#dock { background: rgba(0,35,76,.72); }
+.glass { background: linear-gradient(160deg, rgba(220,229,236,.13), rgba(0,35,76,.35)); }
+@media (max-width: 900px) {
+  #velo, body[data-velo="centro"] #velo { background: linear-gradient(0deg, rgba(0,35,76,.94) 0%, rgba(0,35,76,.62) 55%, rgba(0,35,76,.2) 100%); }
+}

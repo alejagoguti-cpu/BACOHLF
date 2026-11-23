@@ -7,7 +7,7 @@ const CINTA = [['A', 'BEP y EIR/AIR'], ['B', 'Federación de modelos'], ['B', 'C
 
 export function iniciarHero() {
   // cinta infinita (duplicada para que el bucle no tenga corte)
-  const items = CINTA.map(([e, t]) => `<span>${e ? `<b>${e}</b>` : ''}${t}</span>`).join('');
+  const items = CINTA.map(([e, t]) => `<span>${e ? `<b>Etapa ${e}</b>` : ''}${t}</span>`).join('');
   document.getElementById('marquee')!.innerHTML = items + items;
 
   // palabra que rota con desenfoque

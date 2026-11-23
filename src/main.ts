@@ -6,13 +6,14 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { iniciarAnimaciones, iniciarHonorarios, iniciarObra, iniciarActores } from './animaciones';
-import { iniciarHabitacion } from './hab';
 import { iniciarCarrusel } from './carrusel';
 import { iniciarHero } from './hero';
 import { iniciarCursor } from './cursor';
 import { ico, pintarIconos } from './iconos';
 import './interaccion.css';
 gsap.registerPlugin(ScrollTrigger);
+// en un PC liviano las animaciones terminan a tiempo en vez de ralentizarse
+gsap.ticker.lagSmoothing(0);
 
 // ───────────────────────── datos ─────────────────────────
 interface Cat { nombre: string; vOff: number; vLen: number; tOff?: number; tLen?: number; uvOff?: number; uvLen?: number; elementos?: number }
@@ -79,7 +80,7 @@ sol.shadow.bias = -0.0005;
 Object.assign(sol.shadow.camera, { left: -110, right: 110, top: 110, bottom: -110, near: 10, far: 320 });
 scene.add(sol);
 const rim = new THREE.DirectionalLight('#5d8fd6', 1.1); rim.position.set(-80, 40, -90); scene.add(rim);
-const niebla = new THREE.Fog('#101D2C', 160, 650);
+const niebla = new THREE.Fog('#0a2a52', 160, 650);
 scene.fog = niebla;
 
 const camera = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.5, 4000);
@@ -175,11 +176,11 @@ async function cargarContexto(enu: Manifest['enu']) {
         for (let i = 0; i < pos.count; i++) { uv[i * 2] = pos.getX(i); uv[i * 2 + 1] = pos.getZ(i); }
         g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
         const [url, esc] = SUELO[clave];
-        m = new THREE.MeshStandardMaterial({ map: tex(url, esc), roughness: 0.95, color: '#4f5f71' });
+        m = new THREE.MeshStandardMaterial({ map: tex(url, esc), roughness: 0.95, color: '#3b5677' });
         if (clave === 'Vias' || clave === 'Andenes' || clave === 'Ciclorrutas') { m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -2; }
         mesh.material = m;
       } else if (f.startsWith('edificios_')) {
-        m = new THREE.MeshStandardMaterial({ color: '#34465b', roughness: 0.9, flatShading: true });
+        m = new THREE.MeshStandardMaterial({ color: '#2a4a70', roughness: 0.9, flatShading: true });
         mesh.material = m;
       }
       m.userData.baseOp = m.transparent ? m.opacity : 1;
@@ -427,11 +428,11 @@ function definirEscenas() {
     gemelo: { st: { cerr: 0.8, bim: 0, bordes: 0.15, ctx: 0.25, az: 55, el: 30, dist: 78, tx: c2.x, tz: c2.z, ty: 8, shift: 0.18 }, capas: CAPAS.map((c) => c.d) },
     cierre: { st: { az: 25, el: 12, dist: 140, ctx: 1, ty: 10, tx: 0, tz: 0, shift: 0 }, capas: ARQ, velo: 'centro' },
   };
-  const camP2 = [{ az: 14, el: 52, dist: 46 }, { az: 60, el: 40, dist: 38 }, { az: -30, el: 48, dist: 42 }, { az: 100, el: 36, dist: 44 }];
+  const camP2 = [{ az: 14, el: 55, dist: 66 }, { az: 60, el: 44, dist: 58 }, { az: -30, el: 50, dist: 62 }, { az: 100, el: 40, dist: 64 }];
   PASOS_CAPAS.push(
-    { d: 'Arquitectura', st: { az: 30, el: 18, dist: 120, ty: 10, tx: 0, tz: 0, ctx: 0.5, bim: 0, cerr: 0, bordes: 0, verHasta: 9, corteY: 999, explode: 0, shift: -0.14 }, capas: ['Arquitectura'] },
-    { d: 'Estructura', st: { az: -35, el: 24, dist: 135, ty: 14, tx: 0, tz: 0, ctx: 0, bim: 1, cerr: 0, bordes: 0.4, verHasta: 9, corteY: 999, explode: 0.55, shift: -0.14 }, capas: ['Estructura'] },
-    ...MEP_D.map((d, k) => ({ d, st: { ...P2, ...camP2[k], shift: -0.14 }, capas: ['Arquitectura', 'Estructura', d] as Disc[] })),
+    { d: 'Arquitectura', st: { az: 30, el: 18, dist: 175, ty: 10, tx: 0, tz: 0, ctx: 0.5, bim: 0, cerr: 0, bordes: 0, verHasta: 9, corteY: 999, explode: 0, shift: 0.03 }, capas: ['Arquitectura'] },
+    { d: 'Estructura', st: { az: -35, el: 24, dist: 185, ty: 16, tx: 0, tz: 0, ctx: 0, bim: 1, cerr: 0, bordes: 0.4, verHasta: 9, corteY: 999, explode: 0.55, shift: 0.03 }, capas: ['Estructura'] },
+    ...MEP_D.map((d, k) => ({ d, st: { ...P2, ...camP2[k], shift: 0.03 }, capas: ['Arquitectura', 'Estructura', d] as Disc[] })),
   );
 }
 let introHecha = false;
@@ -615,7 +616,6 @@ function frame() {
   iniciarHonorarios();
   iniciarObra();
   iniciarActores();
-  iniciarHabitacion();
   iniciarCarrusel((s) => { // el modelo acompaña la especialidad del carrusel
     if (modo !== 'cine') return;
     if (s === 'arq') { setCapas(['Arquitectura', 'Estructura']); gsap.to(S, { cerr: 0, bordes: 0.7, duration: 1 }); }

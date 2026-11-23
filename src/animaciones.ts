@@ -147,22 +147,26 @@ export function iniciarHonorarios() {
   const M = (v: number) => '$' + Math.round(v * 1e6).toLocaleString('es-CO');
   const vis = { total: 0, iva: 0 };
   const barras = $('#barras');
-  barras.innerHTML = ['A', 'B', 'C', 'D'].map((k) => `<div class="barra-et"><b>${k}</b><div class="t"><i></i></div><span>—</span></div>`).join('');
+  const NOMBRES = ['Implementación, BEP y requisitos BIM', 'Coordinación de diseños · 2 meses', 'Acompañamiento BIM en obra', 'Cierre as-built y gemelo digital'];
+  barras.innerHTML = ['A', 'B', 'C', 'D'].map((k, i) => `<div class="barra-et"><b><small>Etapa</small>${k}</b><div class="nom"><em>${NOMBRES[i]}</em><div class="t"><i></i></div></div><span>—</span></div>`).join('');
   const svg = $('#curva') as unknown as SVGSVGElement;
   const calc = (anim = true) => {
     const meses = +$<HTMLInputElement>('#rMeses').value;
     const tarifa = integrada ? 13.8 : 23;
-    $('#vMeses').textContent = meses + ' meses';
+    const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct'];
+    $('#vMeses').textContent = `${meses} meses · feb – ${MES[meses]} 2027`;
     const et = [33, 47, meses * tarifa, 31]; const total = et.reduce((a, b) => a + b, 0);
     gsap.to(vis, { total, iva: total * 1.19, duration: 0.8, ease: 'power2.out', onUpdate: () => { $('#oTotal').textContent = M(vis.total); $('#oIva').textContent = M(vis.iva); } });
     const max = 23 * 9;
+    $('.barra-et:nth-child(3) em', barras).textContent = `Acompañamiento BIM en obra · ${meses} meses${integrada ? ' (−40%)' : ''}`;
     $$('.barra-et', barras).forEach((b, i) => {
       gsap.to($('i', b), { width: (100 * et[i] / max) + '%', duration: anim ? 1 : 0, ease: 'power3.out', delay: anim ? i * 0.08 : 0 });
       $('span', b).textContent = M(et[i]);
     });
     // curva acumulada mes a mes: A (mes 1), B (meses 2–3), C (obra), D (cierre)
-    const serie = (tar: number) => { const pts = [0, 33, 33 + 23.5, 80]; for (let m = 1; m <= meses; m++) pts.push(80 + m * tar); pts.push(pts[pts.length - 1] + 31); return pts; };
-    const W = 600, H = 230, n = 3 + meses + 2, ymax = 340;
+    // calendario: A en enero; obra (C) desde febrero; B en febrero y marzo; D en el último mes de obra
+    const serie = (tar: number) => { const pts = [0, 33]; for (let k = 1; k <= meses; k++) pts.push(pts[pts.length - 1] + tar + (k <= 2 ? 23.5 : 0) + (k === meses ? 31 : 0)); return pts; };
+    const W = 600, H = 230, n = meses + 2, ymax = 340;
     const path = (p: number[]) => p.map((v, i) => `${i ? 'L' : 'M'}${(i / (n - 1)) * W},${H - (v / ymax) * H}`).join(' ');
     const a = serie(23), b = serie(13.8);
     svg.innerHTML = `
@@ -171,7 +175,7 @@ export function iniciarHonorarios() {
       <path d="${path(integrada ? b : a)} L${W},${H} L0,${H} Z" fill="url(#gA)" class="area"/>
       <path d="${path(a)}" fill="none" stroke="${integrada ? 'rgba(220,229,236,.3)' : '#D5BE91'}" stroke-width="${integrada ? 1.5 : 3}" class="ln"/>
       <path d="${path(b)}" fill="none" stroke="${integrada ? '#D5BE91' : 'rgba(220,229,236,.3)'}" stroke-width="${integrada ? 3 : 1.5}" stroke-dasharray="${integrada ? '' : '5 6'}" class="ln2"/>
-      <text x="6" y="${H + 22}">Mes 0</text><text x="${W}" y="${H + 22}" text-anchor="end">Mes ${n - 1}</text>`;
+      <text x="6" y="${H + 22}">Inicio · ene 2027</text><text x="${W}" y="${H + 22}" text-anchor="end">Entrega · ${MES[meses]} 2027</text>`;
     const ln = svg.querySelector('.ln') as SVGPathElement; const L = ln.getTotalLength();
     if (anim) {
       gsap.fromTo(ln, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: 1.8, ease: 'power2.inOut', onComplete: () => { if (!integrada) ln.style.strokeDasharray = ''; } });
