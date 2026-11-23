@@ -345,3 +345,10 @@ body[data-modo="libre"] #gl { z-index: 6; }
 
 .pasos li i { transition: opacity .4s, transform .4s, box-shadow .4s; }
 #ficha { transition: opacity .4s, transform .4s; }
+
+/* planos: todo el carrusel cabe en pantalla sobre el dock */
+.planos { padding-top: 90px; }
+.planos h2 { font-size: clamp(34px, 4vw, 60px); }
+.planos .lead { margin-top: 12px; }
+.planos .carrusel { margin-top: 8px; height: min(40vh, 380px); }
+.planos .info-lamina { margin-top: 14px; }
