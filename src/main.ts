@@ -56,11 +56,13 @@ const CATS: Record<string, { arq: string; tec: string; disc: Disc; cerr?: boolea
 
 // ───────────────────────── escena ─────────────────────────
 const canvas = document.getElementById('gl') as HTMLCanvasElement;
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+/** Celular o tableta: se aligera todo para que el modelo cargue y se mueva fluido. */
+const MOVIL = matchMedia('(max-width: 900px), (hover: none) and (pointer: coarse)').matches;
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: !MOVIL, alpha: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(MOVIL ? 1.5 : 2, devicePixelRatio));
 renderer.setSize(innerWidth, innerHeight);
 renderer.setClearColor(0x000000, 0);
-renderer.shadowMap.enabled = true;
+renderer.shadowMap.enabled = !MOVIL;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
@@ -154,7 +156,7 @@ async function cargarContexto(enu: Manifest['enu']) {
     Separadores: ['ctx/tex_prado.webp', 6], Ciclorrutas: ['ctx/tex_ciclo.webp', 3],
   };
   const tiles = ['T01', 'T02', 'T03', 'T10', 'T11', 'T12', 'T13', 'T20', 'T21', 'T22', 'T23', 'T30', 'T31', 'T32'];
-  const archivos = [...Object.keys(SUELO).map((k) => 'suelo_' + k), 'hotel_plazoleta', 'hotel_fachadas', 'hotel_cubiertas', 'torres_vecinas', ...tiles.map((t) => 'edificios_' + t)];
+  const archivos = [...Object.keys(SUELO).map((k) => 'suelo_' + k), 'hotel_plazoleta', 'hotel_fachadas', 'hotel_cubiertas', 'torres_vecinas', ...(MOVIL ? [] : tiles.map((t) => 'edificios_' + t))];
   await Promise.all(archivos.map(async (f) => {
     let gltf; try { gltf = await loader.loadAsync(`ctx/${f}.glb`); } catch { return; }
     const recortar = f === 'hotel_fachadas' || f === 'hotel_cubiertas';
@@ -278,7 +280,7 @@ function crearNubes() {
       for (let t = 0; t < nt; t++) {
         const ia = idx ? idx.getX(t * 3) : t * 3, ib = idx ? idx.getX(t * 3 + 1) : t * 3 + 1, ic = idx ? idx.getX(t * 3 + 2) : t * 3 + 2;
         a.fromBufferAttribute(p, ia); b.fromBufferAttribute(p, ib); c.fromBufferAttribute(p, ic);
-        let k = ab.subVectors(b, a).cross(ac.subVectors(c, a)).length() / 2 * 2.2;
+        let k = ab.subVectors(b, a).cross(ac.subVectors(c, a)).length() / 2 * (MOVIL ? 0.8 : 2.2);
         while (k > 0) {
           if (k < 1 && Math.random() > k) break;
           let u = Math.random(), v = Math.random(); if (u + v > 1) { u = 1 - u; v = 1 - v; }
@@ -389,8 +391,18 @@ function pintarDock() {
   document.querySelectorAll<HTMLElement>('#capas .capa').forEach((b) => b.classList.toggle('on', capasOn.has(b.dataset.d as Disc)));
 }
 const MEP_D: Disc[] = ['Hidrosanitaria', 'Red contra incendios', 'Eléctrica', 'Mecánica'];
+let avisoT: number | undefined;
+function avisarCapa(d: Disc, on: boolean) {
+  if (!MOVIL) return;
+  let el = document.getElementById('avisoCapa');
+  if (!el) { el = document.createElement('div'); el.id = 'avisoCapa'; document.body.appendChild(el); }
+  const c = CAPAS.find((x) => x.d === d)!;
+  el.innerHTML = `<i style="background:${c.color}"></i>${d} · ${on ? 'prendida' : 'apagada'}`;
+  el.classList.add('on'); clearTimeout(avisoT); avisoT = window.setTimeout(() => el!.classList.remove('on'), 1600);
+}
 function toggleCapa(d: Disc) {
   const on = !capasOn.has(d);
+  avisarCapa(d, on);
   on ? capasOn.add(d) : capasOn.delete(d);
   gsap.to(L, { [d]: on ? 1 : 0, duration: 0.9, ease: 'power2.inOut', overwrite: 'auto' });
   // las redes están en el Piso 2 y son finas: al prender una se abre "rayos X" y se acerca al piso
@@ -563,7 +575,7 @@ canvas.addEventListener('pointerup', (ev) => {
 
 // ───────────────────────── UI ─────────────────────────
 function ui() {
-  $('#capas').innerHTML = CAPAS.map((c) => `<button class="capa" data-d="${c.d}" style="--c:${c.color}">${ico(ICONO_CAPA[c.d])}${c.corto}</button>`).join('');
+  $('#capas').innerHTML = CAPAS.map((c) => `<button class="capa" data-d="${c.d}" style="--c:${c.color}" aria-label="${c.d}" title="${c.d}">${ico(ICONO_CAPA[c.d])}${c.corto}</button>`).join('');
   $('#capas').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.capa'); if (b) toggleCapa(b.dataset.d as Disc); });
   pintarDock();
   document.querySelectorAll('[data-explorar]').forEach((b) => b.addEventListener('click', entrarLibre));
@@ -582,6 +594,7 @@ function ui() {
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
 let t0 = performance.now();
 function frame() {
+  if (document.hidden) { requestAnimationFrame(frame); return; }
   const now = performance.now(); const dt = Math.min(0.05, (now - t0) / 1000); t0 = now;
   HOV.v += (HOV.meta - HOV.v) * 0.12;
   const E = { ...S };

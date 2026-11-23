@@ -82,6 +82,13 @@ function animarSeccion(sec: HTMLElement) {
   // nubes de chips / actores: salen del centro y quedan flotando
   $$('[data-a="chips"], [data-a="pills"]', sec).forEach((nube) => {
     const hijos = $$(':scope > *', nube); const w = nube.clientWidth; const h = nube.clientHeight;
+    // en celular no hay ancho para la órbita: los chips caen en una rejilla ordenada, uno tras otro
+    if (innerWidth < 900) {
+      hijos.forEach((c) => gsap.killTweensOf(c));
+      tl.fromTo(hijos, { xPercent: 0, yPercent: 0, x: 0, y: 28, z: 0, scale: 0.7, autoAlpha: 0, filter: 'blur(10px)' },
+        { y: 0, scale: 1, autoAlpha: 1, filter: 'blur(0px)', duration: 0.7, stagger: 0.06, ease: 'back.out(1.6)' }, 0.5);
+      return;
+    }
     const pos = orbitas(hijos.length, w * 0.46, h * 0.44);
     hijos.forEach((c, i) => {
       gsap.killTweensOf(c);
@@ -121,7 +128,7 @@ export function iniciarAnimaciones() {
   });
   iniciarTilt();
   // cabecera y dock entran al cargar
-  gsap.from('#top > *', { autoAlpha: 0, y: -24, stagger: 0.1, duration: 0.9, ease: 'power3.out', delay: 0.3 });
+  gsap.from('#top > *', { autoAlpha: 0, y: -24, stagger: 0.1, duration: 0.9, ease: 'power3.out', delay: 0.3, clearProps: 'opacity,visibility,transform' });
   gsap.from('#dock', { autoAlpha: 0, y: 60, scale: 0.9, duration: 1, ease: 'back.out(1.6)', delay: 0.8 });
   gsap.fromTo('#capas .capa', { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, stagger: 0.07, duration: 0.5, delay: 1.2, clearProps: 'opacity,visibility,transform' });
 }
