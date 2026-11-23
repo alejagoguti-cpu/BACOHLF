@@ -76,3 +76,43 @@
 .hero .scroll-hint { display: none; }
 .marquee { bottom: 92px; }
 @media (max-width: 900px) { .hero { height: auto; min-height: 100vh; } }
+
+/* ── hero sin choques: una columna que fluye; los tamaños dependen también del alto ── */
+.hero { display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+  height: auto; min-height: 100vh; padding: clamp(104px, 14vh, 130px) 6vw 118px; }
+.hero .txt { max-width: min(760px, 52vw); }
+.hero .badge { margin-bottom: clamp(14px, 2.6vh, 26px); }
+.hero h1 { font-size: clamp(44px, min(6.2vw, 10.5vh), 108px); }
+.hero .rota { margin-top: clamp(10px, 2vh, 22px); font-size: clamp(18px, min(1.7vw, 3vh), 28px); }
+.hero .lead { margin-top: clamp(8px, 1.4vh, 14px); font-size: clamp(15px, min(1.15vw, 2.1vh), 18px); max-width: 540px; }
+.hero .ctas-hero { margin-top: clamp(16px, 3vh, 30px); }
+.hero .stats { margin-top: clamp(14px, 2.6vh, 26px); }
+.hero .stat { padding: 12px 16px 10px; min-width: 130px; }
+.hero .stat b { font-size: clamp(20px, 2.8vh, 26px); }
+/* la cinta va en el flujo, debajo de los datos, nunca encima del dock */
+.hero .marquee { position: relative; bottom: auto; left: auto; right: auto; width: 100vw; margin: clamp(22px, 4vh, 40px) 0 0 -6vw; }
+/* tarjetas flotantes: solo en el lado del edificio, por debajo de la cabecera */
+.fl1 { right: 4vw; top: max(120px, 16vh); }
+.fl2 { right: 24vw; top: max(150px, 20vh); }
+.fl3 { right: 5vw; top: 54vh; }
+.fl4 { right: 27vw; top: 60vh; }
+@media (max-width: 1280px) { .fl2, .fl4 { display: none; } }
+@media (max-height: 760px) { .hero .lead { display: none; } .fl4 { display: none; } }
+@media (max-width: 900px) {
+  .hero { padding: 96px 16px 110px; justify-content: flex-start; }
+  .hero .txt { max-width: 100%; }
+  .hero .marquee { margin-left: -16px; }
+}
+
+/* cabecera con fondo difuminado: lo que pasa por debajo al hacer scroll se apaga, no se cruza */
+#top::before { content: ''; position: absolute; inset: 0 0 -34px 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, rgba(16,29,44,.94) 0%, rgba(16,29,44,.78) 55%, rgba(16,29,44,0) 100%);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+#top { isolation: isolate; }
+body[data-modo="libre"] #top::before { opacity: .6; }
+/* cierre: halo oscuro detrás del logo y el texto para que no se pierdan sobre el edificio */
+.cierre .txt::before { content: ''; position: absolute; inset: -70px -140px; z-index: -1; pointer-events: none;
+  background: radial-gradient(closest-side, rgba(16,29,44,.88), rgba(16,29,44,.55) 60%, transparent); }
+
+.cierre .logo-cierre { width: 130px; mix-blend-mode: screen; filter: invert(1) brightness(1.5) drop-shadow(0 0 24px rgba(213,190,145,.6)); }
