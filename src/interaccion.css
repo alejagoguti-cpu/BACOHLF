@@ -85,3 +85,7 @@ body[data-velo="centro"] #velo { background: radial-gradient(75% 65% at 50% 50%,
 @media (max-width: 900px) {
   #velo, body[data-velo="centro"] #velo { background: linear-gradient(0deg, rgba(0,35,76,.94) 0%, rgba(0,35,76,.62) 55%, rgba(0,35,76,.2) 100%); }
 }
+
+/* presentación ejecutiva: barrido más tenue y sin elementos de cursor */
+#halo, #punto, #chispas { display: none !important; }
+:is(.btn, .chip, .capa, .glass, .tabs-planos button, .seg button, .btn-explorar)::before { background-image: linear-gradient(105deg, transparent 40%, rgba(255,244,214,.22) 50%, transparent 60%); }
