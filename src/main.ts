@@ -5,148 +5,120 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { iniciarAnimaciones, iniciarHonorarios, iniciarObra, iniciarActores } from './animaciones';
+import { iniciarHabitacion } from './hab';
+import { iniciarCarrusel } from './carrusel';
 gsap.registerPlugin(ScrollTrigger);
-import { iniciarComercial } from './comercial';
-import './comercial.css';
-import './premisa.css';
 
 // ───────────────────────── datos ─────────────────────────
-interface Cat { nombre: string; vOff: number; vLen: number; tOff?: number; tLen?: number; uvOff?: number; uvLen?: number }
+interface Cat { nombre: string; vOff: number; vLen: number; tOff?: number; tLen?: number; uvOff?: number; uvLen?: number; elementos?: number }
 interface NivelInfo { i: number; nombre: string; elev: number; zmin: number; zmax: number; archivo: string; cats: Cat[] }
-interface Manifest { fuente: string; enu: { e: number; n: number; z: number }; extension: [number, number]; niveles: NivelInfo[] }
+interface Manifest { enu: { e: number; n: number; z: number }; niveles: NivelInfo[] }
 
-type Disc = 'Arquitectura' | 'Estructura' | 'Hidrosanitaria' | 'Red contra incendios' | 'Eléctrica' | 'Mecánica';
-const DISCS: Disc[] = ['Arquitectura', 'Estructura', 'Hidrosanitaria', 'Red contra incendios', 'Eléctrica', 'Mecánica'];
+export type Disc = 'Arquitectura' | 'Estructura' | 'Hidrosanitaria' | 'Red contra incendios' | 'Eléctrica' | 'Mecánica';
+export const CAPAS: { d: Disc; corto: string; color: string; texto: string }[] = [
+  { d: 'Arquitectura', corto: 'Arquitectura', color: '#D5BE91', texto: 'Muros en ladrillo, fachadas, ventanería, puertas, barandas, escaleras y cubiertas de los siete niveles.' },
+  { d: 'Estructura', corto: 'Estructura', color: '#9fb6cc', texto: 'Losas, columnas y vigas: la base para verificar alturas libres y pasos de instalaciones.' },
+  { d: 'Hidrosanitaria', corto: 'Hidro', color: '#3d8bff', texto: 'Agua fría, agua caliente, red sanitaria y aparatos de los baños del Piso 2.' },
+  { d: 'Red contra incendios', corto: 'RCI', color: '#ff7a2f', texto: 'Red de rociadores del Piso 2: ramales, bajantes y cabezas en habitaciones y pasillo.' },
+  { d: 'Eléctrica', corto: 'Eléctrica', color: '#2fd0b5', texto: 'Conduit, cajas, tomas, aparatos y luminarias de cada habitación del Piso 2.' },
+  { d: 'Mecánica', corto: 'Mecánica', color: '#c3cbd4', texto: 'Ductos de ventilación y extracción coordinados con las demás redes.' },
+];
 const CATS: Record<string, { arq: string; tec: string; disc: Disc; cerr?: boolean; vidrio?: boolean; metal?: number; rough?: number; nombre: string; mep?: boolean }> = {
-  muros:      { arq: '#dcae95', tec: '#f2f2ef', disc: 'Arquitectura', cerr: true, nombre: 'Muros' },
-  ventanas:   { arq: '#7f98a6', tec: '#e8edf0', disc: 'Arquitectura', cerr: true, vidrio: true, nombre: 'Ventanas' },
-  paneles:    { arq: '#d8d2c6', tec: '#eeeeea', disc: 'Arquitectura', cerr: true, nombre: 'Paneles' },
-  puertas:    { arq: '#8a5a3b', tec: '#ecebe6', disc: 'Arquitectura', nombre: 'Puertas' },
-  montantes:  { arq: '#3a3d41', tec: '#c9ccd0', disc: 'Arquitectura', metal: .6, rough: .4, nombre: 'Montantes' },
-  barandas:   { arq: '#3a3d41', tec: '#c9ccd0', disc: 'Arquitectura', metal: .6, rough: .4, nombre: 'Barandas' },
-  escaleras:  { arq: '#b4afa5', tec: '#e4e4e0', disc: 'Arquitectura', nombre: 'Escaleras' },
-  cubiertas:  { arq: '#ffffff', tec: '#e9e7e2', disc: 'Arquitectura', cerr: true, nombre: 'Cubiertas' },
-  losas:      { arq: '#bcb7ae', tec: '#dfe4ea', disc: 'Estructura', nombre: 'Losas' },
-  columnas:   { arq: '#c8c3b9', tec: '#cfd8e2', disc: 'Estructura', nombre: 'Columnas' },
-  vigas:      { arq: '#c8c3b9', tec: '#cfd8e2', disc: 'Estructura', nombre: 'Vigas' },
-  // redes del Piso 2 (1001_Hotel_la_fotona_redes.rvt) · colores de las láminas técnicas
-  af:         { arq: '#1f6fd1', tec: '#1f6fd1', disc: 'Hidrosanitaria', mep: true, rough: .45, nombre: 'Agua fría' },
-  acs:        { arq: '#d23b2f', tec: '#d23b2f', disc: 'Hidrosanitaria', mep: true, rough: .45, nombre: 'Agua caliente' },
-  san:        { arq: '#8a5a32', tec: '#8a5a32', disc: 'Hidrosanitaria', mep: true, rough: .6, nombre: 'Sanitaria' },
+  muros:      { arq: '#dcae95', tec: '#2a4664', disc: 'Arquitectura', cerr: true, nombre: 'Muros' },
+  ventanas:   { arq: '#7f98a6', tec: '#6f93b8', disc: 'Arquitectura', cerr: true, vidrio: true, nombre: 'Ventanas' },
+  paneles:    { arq: '#d8d2c6', tec: '#2f4a66', disc: 'Arquitectura', cerr: true, nombre: 'Paneles' },
+  puertas:    { arq: '#8a5a3b', tec: '#3a5674', disc: 'Arquitectura', nombre: 'Puertas' },
+  montantes:  { arq: '#3a3d41', tec: '#5c7896', disc: 'Arquitectura', metal: .6, rough: .4, nombre: 'Montantes' },
+  barandas:   { arq: '#3a3d41', tec: '#5c7896', disc: 'Arquitectura', metal: .6, rough: .4, nombre: 'Barandas' },
+  escaleras:  { arq: '#b4afa5', tec: '#35516e', disc: 'Arquitectura', nombre: 'Escaleras' },
+  cubiertas:  { arq: '#ffffff', tec: '#2a4664', disc: 'Arquitectura', cerr: true, nombre: 'Cubiertas' },
+  losas:      { arq: '#bcb7ae', tec: '#8aa2bb', disc: 'Estructura', nombre: 'Losas' },
+  columnas:   { arq: '#c8c3b9', tec: '#c9d6e3', disc: 'Estructura', nombre: 'Columnas' },
+  vigas:      { arq: '#c8c3b9', tec: '#c9d6e3', disc: 'Estructura', nombre: 'Vigas' },
+  af:         { arq: '#3d8bff', tec: '#3d8bff', disc: 'Hidrosanitaria', mep: true, rough: .45, nombre: 'Agua fría' },
+  acs:        { arq: '#ff4b3e', tec: '#ff4b3e', disc: 'Hidrosanitaria', mep: true, rough: .45, nombre: 'Agua caliente' },
+  san:        { arq: '#c08a52', tec: '#c08a52', disc: 'Hidrosanitaria', mep: true, rough: .6, nombre: 'Sanitaria' },
   sanitarios: { arq: '#f4f4f2', tec: '#f4f4f2', disc: 'Hidrosanitaria', mep: true, rough: .25, nombre: 'Aparatos sanitarios' },
   otras:      { arq: '#8b8f96', tec: '#8b8f96', disc: 'Hidrosanitaria', mep: true, nombre: 'Otras tuberías' },
-  rci:        { arq: '#e8731a', tec: '#e8731a', disc: 'Red contra incendios', mep: true, rough: .45, nombre: 'Rociadores y red RCI' },
-  conduit:    { arq: '#2a9d8f', tec: '#2a9d8f', disc: 'Eléctrica', mep: true, rough: .5, nombre: 'Conduit' },
-  aparatos:   { arq: '#0e3064', tec: '#0e3064', disc: 'Eléctrica', mep: true, nombre: 'Tomas y aparatos' },
-  luminarias: { arq: '#f2c230', tec: '#f2c230', disc: 'Eléctrica', mep: true, nombre: 'Luminarias' },
-  ductos:     { arq: '#9aa3ad', tec: '#9aa3ad', disc: 'Mecánica', mep: true, metal: .5, rough: .4, nombre: 'Ductos' },
+  rci:        { arq: '#ff7a2f', tec: '#ff7a2f', disc: 'Red contra incendios', mep: true, rough: .45, nombre: 'Rociadores y red RCI' },
+  conduit:    { arq: '#2fd0b5', tec: '#2fd0b5', disc: 'Eléctrica', mep: true, rough: .5, nombre: 'Conduit' },
+  aparatos:   { arq: '#7fb2ff', tec: '#7fb2ff', disc: 'Eléctrica', mep: true, nombre: 'Tomas y aparatos' },
+  luminarias: { arq: '#ffd447', tec: '#ffd447', disc: 'Eléctrica', mep: true, nombre: 'Luminarias' },
+  ductos:     { arq: '#c3cbd4', tec: '#c3cbd4', disc: 'Mecánica', mep: true, metal: .5, rough: .4, nombre: 'Ductos' },
 };
-const ETAPAS = [
-  ['00', 'Base existente', 'Proveedor externo · LOD 300'],
-  ['A', 'Estructurar', 'BEP y contratación · 1 mes'],
-  ['B', 'Coordinar', 'Diseños LOD 400 · 2 meses'],
-  ['C', 'Construir', 'Seguimiento BIM · 8 meses'],
-  ['D', 'Entregar', 'As-built y gemelo · 1 mes'],
-];
 
 // ───────────────────────── escena ─────────────────────────
 const canvas = document.getElementById('gl') as HTMLCanvasElement;
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
 renderer.setPixelRatio(Math.min(2, devicePixelRatio));
 renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor(0x000000, 0);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+renderer.toneMappingExposure = 1.0;
 renderer.localClippingEnabled = true;
 
 const scene = new THREE.Scene();
-const PAPEL = new THREE.Color('#f7f4ef');
-scene.background = PAPEL.clone();
 const pmrem = new THREE.PMREMGenerator(renderer);
 scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-scene.add(new THREE.HemisphereLight('#fbf7ef', '#9a958c', 0.9));
-const sol = new THREE.DirectionalLight('#fff3df', 2.4);
+scene.environmentIntensity = 0.55;
+const hemi = new THREE.HemisphereLight('#dce5ec', '#101d2c', 0.75);
+scene.add(hemi);
+const sol = new THREE.DirectionalLight('#ffe9c9', 2.6);
 sol.position.set(70, 110, 50);
 sol.castShadow = true;
 sol.shadow.mapSize.set(2048, 2048);
-Object.assign(sol.shadow.camera, { left: -110, right: 110, top: 110, bottom: -110, near: 10, far: 320 });
-const niebla = new THREE.Fog('#f7f4ef', 280, 1100);
 sol.shadow.bias = -0.0005;
+Object.assign(sol.shadow.camera, { left: -110, right: 110, top: 110, bottom: -110, near: 10, far: 320 });
 scene.add(sol);
-const suelo = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), new THREE.ShadowMaterial({ opacity: 0.16 }));
-suelo.rotation.x = -Math.PI / 2; suelo.position.y = -1.25; suelo.receiveShadow = true;
-scene.add(suelo);
-const grilla = new THREE.GridHelper(400, 80, 0xbfc8d1, 0xe4e8ec);
-(grilla.material as THREE.Material).transparent = true; (grilla.material as THREE.Material).opacity = 0;
-grilla.position.y = -1.24; scene.add(grilla);
+const rim = new THREE.DirectionalLight('#5d8fd6', 1.1); rim.position.set(-80, 40, -90); scene.add(rim);
+const niebla = new THREE.Fog('#101D2C', 160, 650);
+scene.fog = niebla;
 
 const camera = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.5, 4000);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true; controls.dampingFactor = 0.08;
-controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 8; controls.maxDistance = 1200;
+controls.maxPolarAngle = Math.PI * 0.495; controls.minDistance = 4; controls.maxDistance = 900;
 controls.enabled = false;
 
 const corte = new THREE.Plane(new THREE.Vector3(0, -1, 0), 999);
-const ACENTO = new THREE.Color('#b59535');
+const ORO = new THREE.Color('#D5BE91');
 
 // ───────────────────────── estado ─────────────────────────
-/** Estado visual completo. En el recorrido lo escribe la timeline (scroll); en modo libre, gsap/la UI. */
 const S = {
-  az: 40, el: 16, dist: 118, tx: 0, ty: 9, tz: 0, // cámara esférica alrededor del objetivo
-  orto: 0,       // 0 perspectiva → 1 casi ortográfica (dolly-zoom)
-  explode: 0,    // 0 edificio completo → 1 axonometría explotada
-  bim: 0,        // 0 materiales → 1 representación técnica neutra
-  cerr: 0,       // 0 cerramientos opacos → 1 transparentes
-  bordes: 0,     // opacidad de aristas técnicas
-  tinta: 0,      // 0 aristas grises → 1 aristas negras (plano)
-  corteY: 999,   // altura del plano de corte (m)
-  verHasta: 9,   // niveles con índice > verHasta se ocultan
-  sel: -1,       // nivel destacado (los demás se atenúan)
-  dimOtros: 0,
-  grilla: 0,
-  ctx: 1,        // opacidad del contexto urbano
-  shift: 0,
-  mep: 0,        // 0 redes ocultas → 1 redes MEP visibles
-  // ── premisa "construir antes de construir" ──
-  nube: 0,       // 1 = la torre es una nube de puntos de escaneo (LOD 300)
-  noche: 0,      // 1 = fondo azul Estelar (apertura)
-  obra: 1,       // avance de la construcción: los niveles pasan de modelo técnico a obra, de abajo hacia arriba
-  dibujo: 1,     // fracción dibujada de las redes MEP (se trazan tubo a tubo)
-  alerta: 0,     // punto crítico real detectado en el modelo de redes
+  az: 40, el: 16, dist: 125, tx: 0, ty: 10, tz: 0, shift: 0.14,
+  nube: 1, bim: 0, cerr: 0, bordes: 0, explode: 0, corteY: 999, verHasta: 9, ctx: 1, obra: 1, alerta: 0, giro: 0,
 };
 type Estado = typeof S;
-/** Interacciones dentro del recorrido: se suman al estado de la timeline sin romper el scrub. */
-const U = { corteExtra: 0, planoNivel: -1, px: 0, py: 0, tpx: 0, tpy: 0 };
-
-interface Nivel { info: NivelInfo; grupo: THREE.Group; mats: Map<string, THREE.MeshStandardMaterial>; lineas: THREE.LineBasicMaterial; caja: THREE.Box3; destino: number; vis: number; hl: number }
-const niveles: Nivel[] = [];
-const pickables: THREE.Mesh[] = [];
-const catsVisibles = new Set(Object.keys(CATS));
+const BASE: Estado = { ...S, nube: 0 };
+/** Opacidad animada de cada capa (0 apagada → 1 prendida). */
+const L: Record<Disc, number> = { Arquitectura: 1, Estructura: 1, Hidrosanitaria: 0, 'Red contra incendios': 0, 'Eléctrica': 0, 'Mecánica': 0 };
+const capasOn = new Set<Disc>(['Arquitectura', 'Estructura']);
+const U = { px: 0, py: 0, tpx: 0, tpy: 0, drift: 0 };
 let modo: 'cine' | 'libre' = 'cine';
 
+interface Nivel { info: NivelInfo; grupo: THREE.Group; mats: Map<string, THREE.MeshStandardMaterial>; lineas: Map<string, THREE.LineSegments>; lmat: THREE.LineBasicMaterial; caja: THREE.Box3; destino: number; vis: number }
+const niveles: Nivel[] = [];
+const pickables: THREE.Mesh[] = [];
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
 const ss = (a: number, b: number, x: number) => { const t = THREE.MathUtils.clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 
-// ───────────────────────── texturas PBR (las mismas del visor HLF) ─────────────────────────
+// ───────────────────────── texturas ─────────────────────────
 const texLoader = new THREE.TextureLoader();
-function tex(url: string, metrosPorTile: number, srgb = true) {
+function tex(url: string, m: number, srgb = true) {
   const t = texLoader.load(url);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.repeat.set(1 / metrosPorTile, 1 / metrosPorTile); // las UV vienen en metros
-  t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
-  t.anisotropy = 8;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1 / m, 1 / m);
+  t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.anisotropy = 8;
   return t;
 }
 const TEX = {
-  // ladrillo a la vista del hotel (foto real): ≈ 5 hiladas por 1,28 m, como en HLF
   ladrillo: { map: tex('ctx/tex_ladrillo_hlf.webp', 1.28), normal: tex('ctx/tex_ladrillo_hlf_n.webp', 1.28, false) },
   teja: { map: tex('ctx/tex_teja.webp', 1.5), normal: null as THREE.Texture | null },
 };
-/** Permite pasar de material a representación técnica: uMapa 1 = textura, 0 = color plano. */
 function conMezclaDeMapa(m: THREE.MeshStandardMaterial) {
-  const u = { value: 1 };
-  m.userData.uMapa = u;
+  const u = { value: 1 }; m.userData.uMapa = u;
   m.onBeforeCompile = (sh) => {
     sh.uniforms.uMapa = u;
     sh.fragmentShader = sh.fragmentShader
@@ -155,10 +127,9 @@ function conMezclaDeMapa(m: THREE.MeshStandardMaterial) {
   };
 }
 
-// ───────────────────────── contexto (terreno, vías, vecinos, resto del hotel) ─────────────────────────
-const ctxGrupo = new THREE.Group(); ctxGrupo.name = 'contexto'; scene.add(ctxGrupo);
+// ───────────────────────── contexto urbano ─────────────────────────
+const ctxGrupo = new THREE.Group(); scene.add(ctxGrupo);
 const ctxMats: THREE.MeshStandardMaterial[] = [];
-let hayContexto = false;
 function dentroDe(poly: [number, number][], x: number, y: number) {
   let r = false;
   for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
@@ -168,28 +139,22 @@ function dentroDe(poly: [number, number][], x: number, y: number) {
   return r;
 }
 async function cargarContexto(enu: Manifest['enu']) {
-  ctxGrupo.position.set(-enu.e, -enu.z, enu.n); // los GLB de HLF están en ENU (x = E, y = cota, z = -N)
+  ctxGrupo.position.set(-enu.e, -enu.z, enu.n);
   const { huella } = await (await fetch('ctx/huella.json')).json() as { huella: [number, number][][] };
   const enHuella = (e: number, n: number) => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => huella.some((p) => dentroDe(p, e + dx, n + dy)));
-  const draco = new DRACOLoader().setDecoderPath('draco/');
-  const loader = new GLTFLoader().setDRACOLoader(draco);
+  const loader = new GLTFLoader().setDRACOLoader(new DRACOLoader().setDecoderPath('draco/'));
   const SUELO: Record<string, [string, number]> = {
     Terreno: ['ctx/tex_prado.webp', 6], Vias: ['ctx/tex_asfalto.webp', 5], Andenes: ['ctx/tex_anden.webp', 2],
     Separadores: ['ctx/tex_prado.webp', 6], Ciclorrutas: ['ctx/tex_ciclo.webp', 3],
   };
   const tiles = ['T01', 'T02', 'T03', 'T10', 'T11', 'T12', 'T13', 'T20', 'T21', 'T22', 'T23', 'T30', 'T31', 'T32'];
-  const archivos = [
-    ...Object.keys(SUELO).map((k) => 'suelo_' + k), 'hotel_plazoleta', 'hotel_fachadas', 'hotel_cubiertas', 'torres_vecinas',
-    ...tiles.map((t) => 'edificios_' + t),
-  ];
+  const archivos = [...Object.keys(SUELO).map((k) => 'suelo_' + k), 'hotel_plazoleta', 'hotel_fachadas', 'hotel_cubiertas', 'torres_vecinas', ...tiles.map((t) => 'edificios_' + t)];
   await Promise.all(archivos.map(async (f) => {
     let gltf; try { gltf = await loader.loadAsync(`ctx/${f}.glb`); } catch { return; }
     const recortar = f === 'hotel_fachadas' || f === 'hotel_cubiertas';
     gltf.scene.traverse((o) => {
       const mesh = o as THREE.Mesh; if (!mesh.isMesh) return;
-      const g = mesh.geometry as THREE.BufferGeometry;
-      const pos = g.getAttribute('position');
-      // el volumen viejo del hotel se recorta donde ahora está el Revit (misma huella que usa HLF)
+      const g = mesh.geometry as THREE.BufferGeometry; const pos = g.getAttribute('position');
       if (recortar && g.index) {
         const idx = g.index.array; const keep: number[] = [];
         for (let t = 0; t < idx.length; t += 3) {
@@ -200,16 +165,16 @@ async function cargarContexto(enu: Manifest['enu']) {
       }
       const clave = f.startsWith('suelo_') ? f.slice(6) : '';
       let m = mesh.material as THREE.MeshStandardMaterial;
-      if (clave) { // suelo sin UV en el GLB: UV planas en metros + foto PBR
+      if (clave) {
         const uv = new Float32Array(pos.count * 2);
         for (let i = 0; i < pos.count; i++) { uv[i * 2] = pos.getX(i); uv[i * 2 + 1] = pos.getZ(i); }
         g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
         const [url, esc] = SUELO[clave];
-        m = new THREE.MeshStandardMaterial({ map: tex(url, esc), roughness: 0.95 });
+        m = new THREE.MeshStandardMaterial({ map: tex(url, esc), roughness: 0.95, color: '#4f5f71' });
         if (clave === 'Vias' || clave === 'Andenes' || clave === 'Ciclorrutas') { m.polygonOffset = true; m.polygonOffsetFactor = -1; m.polygonOffsetUnits = -2; }
         mesh.material = m;
       } else if (f.startsWith('edificios_')) {
-        m = new THREE.MeshStandardMaterial({ color: '#e6e2db', roughness: 0.9, flatShading: true });
+        m = new THREE.MeshStandardMaterial({ color: '#34465b', roughness: 0.9, flatShading: true });
         mesh.material = m;
       }
       m.userData.baseOp = m.transparent ? m.opacity : 1;
@@ -219,89 +184,82 @@ async function cargarContexto(enu: Manifest['enu']) {
     });
     ctxGrupo.add(gltf.scene);
   }));
-  hayContexto = true; suelo.visible = false;
-}
-
-// ───────────────────────── redes MEP (Piso 2) ─────────────────────────
-const cajaMep = new THREE.Box3();
-const centroMep = new THREE.Vector3(); // centroide de la tubería bajo +6 m (sin la bajante que sube a la cubierta)
-let mepInfo = null as { fuente: string; cats: (Cat & { elementos: number })[] } | null;
-async function cargarMep() {
-  const p2 = niveles.find((n) => n.info.nombre === 'PISO 2'); if (!p2) return;
-  try { mepInfo = await (await fetch('data/mep.json')).json(); } catch { return; }
-  const buf = await (await fetch('data/mep.bin')).arrayBuffer();
-  for (const c of mepInfo!.cats) {
-    const def = CATS[c.nombre]; if (!def) continue;
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(buf, c.vOff, c.vLen), 3));
-    g.setIndex(new THREE.BufferAttribute(new Uint32Array(buf, c.tOff!, c.tLen!), 1));
-    g.computeVertexNormals(); g.computeBoundingBox(); cajaMep.union(g.boundingBox!);
-    if (['af', 'acs', 'san', 'rci', 'conduit'].includes(c.nombre)) {
-      const p = g.getAttribute('position'); let sx = 0, sz = 0, k = 0;
-      for (let i = 0; i < p.count; i++) if (p.getY(i) < 6) { sx += p.getX(i); sz += p.getZ(i); k++; }
-      if (k) { centroMep.x += sx; centroMep.z += sz; centroMep.y += k; }
-    }
-    const m = new THREE.MeshStandardMaterial({ color: def.arq, roughness: def.rough ?? 0.6, metalness: def.metal ?? 0.05, clippingPlanes: [corte], transparent: true, opacity: 0 });
-    m.userData = { def };
-    const mesh = new THREE.Mesh(g, m);
-    mesh.name = c.nombre; mesh.castShadow = false; mesh.receiveShadow = false; mesh.renderOrder = 2;
-    mesh.userData = { cat: c.nombre, tris: c.tLen! / 3, elementos: c.elementos, mep: true };
-    p2.grupo.add(mesh); p2.mats.set(c.nombre, m);
-  }
 }
 
 // ───────────────────────── carga ─────────────────────────
+const cajaMep = new THREE.Box3();
+const centroMep = new THREE.Vector3();
+let mepCats: (Cat & { elementos: number })[] = [];
+function mallaCat(n: Nivel, nombre: string, g: THREE.BufferGeometry, m: THREE.MeshStandardMaterial, def: typeof CATS[string], extra: object = {}) {
+  const mesh = new THREE.Mesh(g, m);
+  mesh.name = nombre; mesh.castShadow = !def.vidrio && !def.mep; mesh.receiveShadow = !def.mep;
+  mesh.userData = { cat: nombre, ...extra };
+  n.grupo.add(mesh); n.mats.set(nombre, m);
+  const ed = new THREE.LineSegments(new THREE.EdgesGeometry(g, 28), n.lmat);
+  ed.raycast = () => {}; ed.visible = false;
+  if (!def.mep) { n.grupo.add(ed); n.lineas.set(nombre, ed); }
+}
 async function cargar() {
   const man: Manifest = await (await fetch('data/manifest.json')).json();
   let hechos = 0;
   await Promise.all(man.niveles.map(async (info) => {
     const buf = await (await fetch('data/' + info.archivo)).arrayBuffer();
-    const grupo = new THREE.Group(); grupo.name = info.nombre;
-    const mats = new Map<string, THREE.MeshStandardMaterial>();
-    const lineas = new THREE.LineBasicMaterial({ color: '#4d5966', transparent: true, opacity: 0, depthWrite: false, clippingPlanes: [corte] });
-    const caja = new THREE.Box3();
+    const n: Nivel = { info, grupo: new THREE.Group(), mats: new Map(), lineas: new Map(), lmat: new THREE.LineBasicMaterial({ color: ORO, transparent: true, opacity: 0, depthWrite: false, clippingPlanes: [corte] }), caja: new THREE.Box3(), destino: 0, vis: 1 };
+    n.grupo.name = info.nombre;
     for (const c of info.cats) {
       const def = CATS[c.nombre]; if (!def) continue;
       const g = new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(buf, c.vOff, c.vLen), 3));
       if (c.tOff !== undefined) g.setIndex(new THREE.BufferAttribute(new Uint32Array(buf, c.tOff, c.tLen!), 1));
       if (c.uvOff !== undefined) g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(buf, c.uvOff, c.uvLen!), 2));
-      g.computeBoundingBox(); caja.union(g.boundingBox!);
+      g.computeBoundingBox(); n.caja.union(g.boundingBox!);
       const pbr = c.nombre === 'muros' ? TEX.ladrillo : c.nombre === 'cubiertas' ? TEX.teja : null;
       const m = new THREE.MeshStandardMaterial({
-        color: def.arq, roughness: def.rough ?? (def.vidrio ? 0.08 : 0.88), metalness: def.metal ?? (def.vidrio ? 0.2 : 0),
+        color: def.arq, roughness: def.rough ?? (def.vidrio ? 0.08 : 0.88), metalness: def.metal ?? (def.vidrio ? 0.3 : 0),
         flatShading: !pbr, side: THREE.DoubleSide, transparent: !!def.vidrio, opacity: def.vidrio ? 0.5 : 1, clippingPlanes: [corte],
         map: pbr?.map ?? null, normalMap: pbr?.normal ?? null,
       });
       if (pbr) { g.computeVertexNormals(); conMezclaDeMapa(m); }
-      m.userData = { ...m.userData, def };
-      const mesh = new THREE.Mesh(g, m);
-      mesh.castShadow = !def.vidrio; mesh.receiveShadow = true;
-      mesh.userData = { nivel: niveles.length, cat: c.nombre, tris: (c.tLen ?? c.vLen / 3) / 3 };
-      mesh.name = c.nombre;
-      grupo.add(mesh);
-      const ed = new THREE.LineSegments(new THREE.EdgesGeometry(g, 28), lineas);
-      ed.userData = { cat: c.nombre }; ed.raycast = () => {};
-      grupo.add(ed);
-      mats.set(c.nombre, m);
+      m.userData.def = def;
+      mallaCat(n, c.nombre, g, m, def, { tris: (c.tLen ?? c.vLen / 3) / 3 });
     }
-    niveles[info.i] = { info, grupo, mats, lineas, caja, destino: 0, vis: 1, hl: 0 };
-    scene.add(grupo);
-    hechos++; ($('#cargando i')).style.width = (100 * hechos / man.niveles.length) + '%';
+    niveles[info.i] = n; scene.add(n.grupo);
+    hechos++; $('#cargando i b').style.width = (90 * hechos / man.niveles.length) + '%';
   }));
-  await cargarMep();
-  crearNubes();
-  buscarPuntoCritico();
-  niveles.forEach((n, i) => n.grupo.children.forEach((o) => { if ((o as THREE.Mesh).isMesh) { o.userData.nivel = i; pickables.push(o as THREE.Mesh); } }));
-  // separación final de cada nivel en la axonometría explotada
-  niveles.forEach((n, i) => { n.destino = i * 9 + (n.info.nombre === "CUBIERTA" ? 8 : 0); });
+  // redes MEP del Piso 2
+  const p2 = niveles.find((n) => n.info.nombre === 'PISO 2');
+  try {
+    const info = await (await fetch('data/mep.json')).json();
+    const buf = await (await fetch('data/mep.bin')).arrayBuffer();
+    mepCats = info.cats;
+    for (const c of info.cats as (Cat & { elementos: number })[]) {
+      const def = CATS[c.nombre]; if (!def || !p2) continue;
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(buf, c.vOff, c.vLen), 3));
+      g.setIndex(new THREE.BufferAttribute(new Uint32Array(buf, c.tOff!, c.tLen!), 1));
+      g.computeVertexNormals(); g.computeBoundingBox(); cajaMep.union(g.boundingBox!);
+      if (['af', 'acs', 'san', 'rci', 'conduit'].includes(c.nombre)) {
+        const p = g.getAttribute('position'); let sx = 0, sz = 0, k = 0;
+        for (let i = 0; i < p.count; i++) if (p.getY(i) < 6) { sx += p.getX(i); sz += p.getZ(i); k++; }
+        if (k) { centroMep.x += sx; centroMep.z += sz; centroMep.y += k; }
+      }
+      const m = new THREE.MeshStandardMaterial({ color: def.arq, roughness: def.rough ?? 0.6, metalness: def.metal ?? 0.05, clippingPlanes: [corte], transparent: true, opacity: 0, emissive: new THREE.Color(def.arq).multiplyScalar(0.55) });
+      m.userData.def = def;
+      mallaCat(p2, c.nombre, g, m, def, { elementos: c.elementos, tris: c.tLen! / 3, mep: true });
+      p2.grupo.children[p2.grupo.children.length - 1].renderOrder = 2;
+    }
+  } catch (e) { console.warn('mep', e); }
   if (centroMep.y > 0) centroMep.set(centroMep.x / centroMep.y, 0, centroMep.z / centroMep.y);
+  crearNubes(); buscarPuntoCritico();
+  niveles.forEach((n, i) => {
+    n.destino = i * 9 + (n.info.nombre === 'CUBIERTA' ? 8 : 0);
+    n.grupo.children.forEach((o) => { if ((o as THREE.Mesh).isMesh) { o.userData.nivel = i; pickables.push(o as THREE.Mesh); } });
+  });
   return man;
 }
 
 // ───────────────────────── nube de escaneo + punto crítico ─────────────────────────
 const nubes: THREE.Points[] = [];
-/** Muestrea las superficies reales del modelo (muros, ventanas, losas, cubiertas) como una nube de puntos de escaneo. */
 function crearNubes() {
   const fuente = ['muros', 'ventanas', 'losas', 'cubiertas', 'paneles', 'columnas'];
   const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), ab = new THREE.Vector3(), ac = new THREE.Vector3();
@@ -309,13 +267,12 @@ function crearNubes() {
     const pts: number[] = [];
     n.grupo.children.forEach((o) => {
       const mesh = o as THREE.Mesh; if (!mesh.isMesh || !fuente.includes(mesh.name)) return;
-      const g = mesh.geometry as THREE.BufferGeometry; const p = g.getAttribute('position'); const idx = g.index;
+      const g = mesh.geometry; const p = g.getAttribute('position'); const idx = g.index;
       const nt = idx ? idx.count / 3 : p.count / 3;
       for (let t = 0; t < nt; t++) {
         const ia = idx ? idx.getX(t * 3) : t * 3, ib = idx ? idx.getX(t * 3 + 1) : t * 3 + 1, ic = idx ? idx.getX(t * 3 + 2) : t * 3 + 2;
         a.fromBufferAttribute(p, ia); b.fromBufferAttribute(p, ib); c.fromBufferAttribute(p, ic);
-        const area = ab.subVectors(b, a).cross(ac.subVectors(c, a)).length() / 2;
-        let k = area * 2.2; // ≈ 2 puntos por m²
+        let k = ab.subVectors(b, a).cross(ac.subVectors(c, a)).length() / 2 * 2.2;
         while (k > 0) {
           if (k < 1 && Math.random() > k) break;
           let u = Math.random(), v = Math.random(); if (u + v > 1) { u = 1 - u; v = 1 - v; }
@@ -325,13 +282,11 @@ function crearNubes() {
       }
     });
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-    const m = new THREE.PointsMaterial({ color: '#e6c766', size: 0.16, sizeAttenuation: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+    const m = new THREE.PointsMaterial({ color: '#e6cf9c', size: 0.16, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
     const nube = new THREE.Points(g, m); nube.raycast = () => {}; nube.visible = false;
     n.grupo.add(nube); nubes.push(nube);
   });
 }
-
-/** Punto crítico REAL: la menor separación entre la red contra incendios y el conduit eléctrico del Piso 2. */
 const critico = { p: new THREE.Vector3(), d: Infinity, ok: false };
 let marcaCritico: THREE.Mesh | null = null;
 function buscarPuntoCritico() {
@@ -354,394 +309,286 @@ function buscarPuntoCritico() {
     }
   }
   if (!critico.ok) return;
-  marcaCritico = new THREE.Mesh(new THREE.SphereGeometry(0.45, 32, 16), new THREE.MeshBasicMaterial({ color: '#e0412f', transparent: true, opacity: 0, depthTest: false }));
+  marcaCritico = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 16), new THREE.MeshBasicMaterial({ color: '#e0533f', transparent: true, opacity: 0, depthTest: false }));
   marcaCritico.position.copy(critico.p); marcaCritico.renderOrder = 10; marcaCritico.raycast = () => {};
   p2.grupo.add(marcaCritico);
 }
 
 // ───────────────────────── aplicar estado ─────────────────────────
-const tmpC = new THREE.Color();
-const NAVY = new THREE.Color('#0e3064');
+const tmpC = new THREE.Color(), tmpT = new THREE.Color();
 function aplicar(st: Estado) {
   const e = st.explode, nTop = niveles.length - 1, N = niveles.length;
   const tiempo = performance.now() / 1000;
   niveles.forEach((n, i) => {
     const w = i === nTop ? ss(0.2, 0.45, e) : i >= 3 ? ss(0.45, 0.7, e) : ss(0.7, 1, e);
     n.grupo.position.y = n.destino * w;
-    const visNivel = THREE.MathUtils.clamp(st.verHasta - i + 1, 0, 1);
-    const dim = st.sel >= 0 && st.sel !== i ? 1 - 0.85 * st.dimOtros : 1;
-    n.vis = visNivel * dim;
+    n.vis = THREE.MathUtils.clamp(st.verHasta - i + 1, 0, 1);
     n.grupo.visible = n.vis > 0.01;
-    n.hl = THREE.MathUtils.lerp(n.hl, st.sel === i ? 1 : 0, 0.12);
-    // construcción por niveles: cada piso pasa de modelo técnico a obra terminada, con un destello dorado al "construirse"
     const hecho = ss(i / N, (i + 1) / N, st.obra);
     const bimN = Math.max(st.bim, 1 - hecho);
     const destello = Math.sin(Math.PI * hecho) * (st.obra < 0.999 ? 1 : 0);
     const solido = 1 - st.nube;
     for (const [cat, m] of n.mats) {
       const def = m.userData.def as typeof CATS[string];
-      m.color.copy(tmpC.set(def.arq)).lerp(new THREE.Color(def.tec), def.mep ? 0 : bimN);
-      let op = def.vidrio ? THREE.MathUtils.lerp(0.5, 0.35, bimN) : 1;
-      if (def.cerr) op *= THREE.MathUtils.lerp(1, def.vidrio ? 0.25 : 0.14, st.cerr);
-      if (def.mep) op *= st.mep;
-      op *= n.vis * solido;
+      const capa = L[def.disc];
+      m.color.copy(tmpC.set(def.arq)).lerp(tmpT.set(def.tec), def.mep ? 0 : bimN);
+      let op = def.vidrio ? THREE.MathUtils.lerp(0.5, 0.4, bimN) : 1;
+      if (def.cerr || def.disc === 'Arquitectura') op *= THREE.MathUtils.lerp(1, def.vidrio ? 0.18 : 0.1, st.cerr);
+      op *= capa * n.vis * solido;
       m.opacity = op; m.transparent = op < 0.999; m.depthWrite = op > 0.6;
-      if (def.mep) m.emissive.set(def.arq).multiplyScalar(0.6);
-      else m.emissive.copy(ACENTO).multiplyScalar(0.35 * n.hl + 0.9 * destello);
-      m.visible = catsVisibles.has(cat) && (!def.mep || st.mep > 0.01) && op > 0.005;
+      if (!def.mep) m.emissive.copy(ORO).multiplyScalar(0.55 * destello);
+      m.visible = op > 0.005;
       if (m.userData.uMapa) { m.userData.uMapa.value = 1 - bimN; m.normalScale.setScalar(1 - bimN); }
+      const ed = n.lineas.get(cat);
+      if (ed) {
+        const lo = Math.max(st.bordes, 0.5 * (1 - hecho) * solido) * n.vis * capa * (def.disc === 'Arquitectura' ? 1 - 0.5 * st.cerr : 1);
+        ed.visible = lo > 0.01;
+      }
     }
-    n.lineas.opacity = Math.max(st.bordes, 0.45 * (1 - hecho) * (1 - st.nube)) * n.vis;
-    n.lineas.color.set('#6a7d99').lerp(new THREE.Color('#0e3064'), st.tinta);
-    const verLineas = n.lineas.opacity > 0.01;
-    n.grupo.children.forEach((o) => { if ((o as THREE.LineSegments).isLineSegments) o.visible = verLineas && catsVisibles.has(o.userData.cat); });
-    // nube de escaneo con brillo que respira
+    n.lmat.opacity = Math.max(st.bordes, 0.5 * (1 - hecho) * (1 - st.nube)) * n.vis;
     const nube = nubes[i];
     if (nube) { const pm = nube.material as THREE.PointsMaterial; pm.opacity = st.nube * n.vis * (0.75 + 0.25 * Math.sin(tiempo * 2 + i)); nube.visible = pm.opacity > 0.01; }
   });
-  // redes trazadas tubo a tubo
-  const p2 = niveles.find((n) => n.info.nombre === 'PISO 2');
-  p2?.grupo.children.forEach((o) => { if (o.userData.mep) { const g = (o as THREE.Mesh).geometry; const c = g.index!.count; g.setDrawRange(0, Math.floor((c * st.dibujo) / 3) * 3); } });
   if (marcaCritico) {
     const mm = marcaCritico.material as THREE.MeshBasicMaterial;
     mm.opacity = st.alerta * (0.55 + 0.35 * Math.sin(tiempo * 6)); marcaCritico.visible = mm.opacity > 0.01;
-    marcaCritico.scale.setScalar(1 + 0.35 * Math.sin(tiempo * 3));
+    marcaCritico.scale.setScalar(1 + 0.4 * Math.sin(tiempo * 3));
   }
   corte.constant = st.corteY;
-  (grilla.material as THREE.Material).opacity = 0.6 * st.grilla;
-  (suelo.material as THREE.ShadowMaterial).opacity = 0.16 * (1 - st.orto) * (1 - st.bim * 0.6) * (1 - st.noche);
-  sol.intensity = THREE.MathUtils.lerp(2.4, 1.2, st.bim);
   ctxGrupo.visible = st.ctx > 0.01;
   for (const m of ctxMats) { const op = m.userData.baseOp * st.ctx; m.opacity = op; m.transparent = op < 0.999; m.depthWrite = op > 0.5; }
-  (scene.background as THREE.Color).copy(PAPEL).lerp(NAVY, st.noche);
-  niebla.color.copy(scene.background as THREE.Color);
-  scene.fog = hayContexto && st.orto < 0.05 ? niebla : null;
 }
-
 const objetivo = new THREE.Vector3();
 function camaraDesde(st: Estado) {
   objetivo.set(st.tx, st.ty, st.tz);
-  const az = THREE.MathUtils.degToRad(st.az), el = THREE.MathUtils.degToRad(st.el);
-  // dolly-zoom: al cerrar el FOV se aleja la cámara para conservar el encuadre → proyección casi ortográfica
-  const fov = THREE.MathUtils.lerp(35, 2.2, st.orto);
-  const k = Math.tan(THREE.MathUtils.degToRad(17.5)) / Math.tan(THREE.MathUtils.degToRad(fov / 2));
-  const d = st.dist * k;
+  const az = THREE.MathUtils.degToRad(st.az + st.giro), el = THREE.MathUtils.degToRad(st.el);
+  const d = st.dist;
   camera.position.set(objetivo.x + d * Math.cos(el) * Math.sin(az), objetivo.y + d * Math.sin(el), objetivo.z + d * Math.cos(el) * Math.cos(az));
-  camera.fov = fov; camera.near = Math.max(0.5, d * 0.02); camera.far = d * 6 + 400;
-  camera.updateProjectionMatrix();
-  camera.lookAt(objetivo);
-  if (st.shift > 0.001) camera.setViewOffset(innerWidth, innerHeight, -innerWidth * st.shift, 0, innerWidth, innerHeight); else camera.clearViewOffset();
+  camera.fov = 35; camera.near = Math.max(0.3, d * 0.01); camera.far = d * 8 + 600;
+  camera.updateProjectionMatrix(); camera.lookAt(objetivo);
+  const sh = innerWidth < 900 ? 0 : st.shift;
+  if (Math.abs(sh) > 0.001) camera.setViewOffset(innerWidth, innerHeight, -innerWidth * sh, innerWidth < 900 ? innerHeight * 0.12 : 0, innerWidth, innerHeight); else camera.clearViewOffset();
 }
 
-// ───────────────────────── etiquetas 3D ─────────────────────────
-interface Etq { el: HTMLDivElement; pos: () => THREE.Vector3; vis: () => number; click?: () => void }
-const etiquetas: Etq[] = [];
-function etiqueta(txt: string, pos: Etq['pos'], vis: Etq['vis'], click?: () => void) {
-  const el = document.createElement('div'); el.className = 'etq'; el.textContent = txt;
-  if (click) el.addEventListener('click', click);
-  $('#etiquetas').appendChild(el); etiquetas.push({ el, pos, vis, click });
-  return el;
+// ───────────────────────── capas ─────────────────────────
+function setCapas(lista: Disc[], dur = 1.1) {
+  capasOn.clear(); lista.forEach((d) => capasOn.add(d));
+  for (const c of CAPAS) gsap.to(L, { [c.d]: capasOn.has(c.d) ? 1 : 0, duration: dur, ease: 'power2.inOut', overwrite: 'auto' });
+  pintarDock();
 }
-const pv = new THREE.Vector3();
-function actualizarEtiquetas() {
-  for (const t of etiquetas) {
-    const a = t.vis();
-    if (a < 0.02) { t.el.style.opacity = '0'; t.el.style.pointerEvents = 'none'; continue; }
-    pv.copy(t.pos()).project(camera);
-    if (pv.z > 1) { t.el.style.opacity = '0'; continue; }
-    t.el.style.left = ((pv.x + 1) / 2 * innerWidth) + 'px';
-    t.el.style.top = ((1 - pv.y) / 2 * innerHeight - 18) + 'px';
-    t.el.style.opacity = String(a); t.el.style.pointerEvents = 'auto';
+function pintarDock() {
+  document.querySelectorAll<HTMLElement>('#capas .capa').forEach((b) => b.classList.toggle('on', capasOn.has(b.dataset.d as Disc)));
+}
+const MEP_D: Disc[] = ['Hidrosanitaria', 'Red contra incendios', 'Eléctrica', 'Mecánica'];
+function toggleCapa(d: Disc) {
+  const on = !capasOn.has(d);
+  on ? capasOn.add(d) : capasOn.delete(d);
+  gsap.to(L, { [d]: on ? 1 : 0, duration: 0.9, ease: 'power2.inOut', overwrite: 'auto' });
+  // las redes están en el Piso 2 y son finas: al prender una se abre "rayos X" y se acerca al piso
+  if (on && MEP_D.includes(d)) {
+    if (modo === 'libre') vista('p2', false);
+    else gsap.to(S, { cerr: Math.max(S.cerr, 0.9), duration: 1 });
   }
+  if (on && d === 'Estructura' && !capasOn.has('Arquitectura')) gsap.to(S, { bim: 1, duration: 1 });
+  pintarDock();
 }
 
-// ───────────────────────── recorrido (MODO A): "construir antes de construir" ─────────────────────────
-// El scroll recorre las etapas del proyecto.
-let tl: gsap.core.Timeline; let st: ScrollTrigger;
-let escenaActual = 1; // 1 apertura · 2 tiempo · 3 dinero · 4 gestión
-const FASES = [
-  { k: '00', nombre: 'Inicio', t0: 0 }, { k: '01', nombre: 'Tiempo', t0: 22 },
-  { k: '02', nombre: 'Dinero', t0: 58 }, { k: '03', nombre: 'Gestión', t0: 102 },
-];
-const T_FIN = 130;
-function construirRecorrido() {
-  const nivelP2 = niveles.findIndex((n) => n.info.nombre === 'PISO 2');
-  const elevP2 = niveles[nivelP2]?.info.elev ?? 3;
-  const c2 = niveles[nivelP2].caja.getCenter(new THREE.Vector3());
+// ───────────────────────── escenas (una por sección) ─────────────────────────
+type Escena = { st: Partial<Estado>; capas: Disc[]; velo?: 'centro'; enter?: () => void };
+let ESC: Record<string, Escena> = {};
+const PASOS_CAPAS: { d: Disc; st: Partial<Estado>; capas: Disc[] }[] = [];
+function definirEscenas() {
+  const ip2 = niveles.findIndex((n) => n.info.nombre === 'PISO 2');
+  const e2 = niveles[ip2]?.info.elev ?? 3;
+  const c2 = niveles[ip2].caja.getCenter(new THREE.Vector3());
   const cm = cajaMep.isEmpty() ? c2 : centroMep;
   const cp = critico.ok ? critico.p : cm;
-  // estado de apertura: la torre es una nube de escaneo sobre azul Estelar
-  Object.assign(S, { nube: 1, noche: 1, ctx: 0, bim: 1, obra: 0, dibujo: 0, mep: 0, az: 48, el: 14, dist: 112, ty: 10 });
-  tl = gsap.timeline({ defaults: { ease: 'none' }, paused: true });
-  const T = (obj: object, at: number, dur: number, ease = 'none') => tl.to(S, { ...obj, duration: dur, ease }, at);
+  const P2: Partial<Estado> = { verHasta: ip2, corteY: e2 + 2.75, cerr: 0.92, bim: 1, bordes: 0.18, ctx: 0, ty: e2 + 1.5, tx: cm.x, tz: cm.z, explode: 0, nube: 0, obra: 1 };
+  const ARQ: Disc[] = ['Arquitectura', 'Estructura'];
+  ESC = {
+    hero: { st: { az: 38, el: 14, dist: 125, ty: 10, tx: 0, tz: 0, ctx: 1, shift: 0.16 }, capas: ARQ },
+    problema: { st: { bim: 1, bordes: 0.55, cerr: 0.55, az: -40, el: 22, dist: 150, ctx: 0.12, shift: 0 }, capas: ['Arquitectura', 'Estructura', 'Hidrosanitaria', 'Eléctrica', 'Red contra incendios'], velo: 'centro' },
+    escaneo: { st: { nube: 1, bim: 1, ctx: 0, az: 70, el: 16, dist: 108, shift: 0.16 }, capas: ARQ },
+    critico: { st: { ...P2, tx: cp.x, ty: cp.y, tz: cp.z, dist: 8, el: 34, az: 40, alerta: 1, shift: 0.18 }, capas: ['Arquitectura', 'Red contra incendios', 'Eléctrica'] },
+    etapas: { st: { bim: 0, ctx: 0.6, az: -50, el: 26, dist: 170, ty: 14, shift: 0, cerr: 0 }, capas: ARQ, enter: () => { gsap.fromTo(S, { obra: 0 }, { obra: 1, duration: 5, ease: 'power1.inOut', overwrite: false }); } },
+    obra: { st: { verHasta: ip2, corteY: e2 + 1.4, bim: 1, bordes: 0.6, cerr: 0, ctx: 0, el: 62, dist: 82, az: 10, tx: c2.x, tz: c2.z, ty: e2, shift: 0.2 }, capas: ARQ },
+    interior: { st: { bim: 1, bordes: 0.25, ctx: 0.1, az: 140, el: 20, dist: 220, ty: 10, shift: 0 }, capas: ARQ, velo: 'centro' },
+    planos: { st: { verHasta: ip2, corteY: e2 + 1.4, bim: 1, bordes: 0.7, cerr: 0, ctx: 0, el: 82, dist: 120, az: 0, tx: c2.x, tz: c2.z, ty: e2, shift: 0 }, capas: ARQ, velo: 'centro' },
+    actores: { st: { explode: 1, bim: 1, bordes: 0.45, ctx: 0, az: 95, el: 24, dist: 190, ty: 30, shift: 0 }, capas: ['Arquitectura', 'Estructura', 'Hidrosanitaria', 'Eléctrica'], velo: 'centro' },
+    honorarios: { st: { bim: 1, bordes: 0.3, ctx: 0.15, az: 200, el: 18, dist: 210, ty: 10, shift: 0 }, capas: ARQ, velo: 'centro' },
+    gemelo: { st: { cerr: 0.8, bim: 0, bordes: 0.15, ctx: 0.25, az: 55, el: 30, dist: 78, tx: c2.x, tz: c2.z, ty: 8, shift: 0.18 }, capas: CAPAS.map((c) => c.d) },
+    cierre: { st: { az: 25, el: 12, dist: 140, ctx: 1, ty: 10, tx: 0, tz: 0, shift: 0 }, capas: ARQ, velo: 'centro' },
+  };
+  const camP2 = [{ az: 14, el: 52, dist: 46 }, { az: 60, el: 40, dist: 38 }, { az: -30, el: 48, dist: 42 }, { az: 100, el: 36, dist: 44 }];
+  PASOS_CAPAS.push(
+    { d: 'Arquitectura', st: { az: 30, el: 18, dist: 120, ty: 10, tx: 0, tz: 0, ctx: 0.5, bim: 0, cerr: 0, bordes: 0, verHasta: 9, corteY: 999, explode: 0, shift: -0.14 }, capas: ['Arquitectura'] },
+    { d: 'Estructura', st: { az: -35, el: 24, dist: 135, ty: 14, tx: 0, tz: 0, ctx: 0, bim: 1, cerr: 0, bordes: 0.4, verHasta: 9, corteY: 999, explode: 0.55, shift: -0.14 }, capas: ['Estructura'] },
+    ...MEP_D.map((d, k) => ({ d, st: { ...P2, ...camP2[k], shift: -0.14 }, capas: ['Arquitectura', 'Estructura', d] as Disc[] })),
+  );
+}
+function irA(nombre: string) {
+  const e = ESC[nombre]; if (!e || modo !== 'cine') return;
+  gsap.to(S, { ...BASE, alerta: 0, ...e.st, duration: 1.9, ease: 'power3.inOut', overwrite: 'auto' });
+  setCapas(e.capas);
+  document.body.dataset.velo = e.velo ?? '';
+  e.enter?.();
+}
 
-  // La nube de puntos se convierte gradualmente en la estructura al deslizar.
-  T({ az: 18, el: 20, dist: 104 }, 0, 10);
-  tl.to('#velo', { opacity: 0, duration: 16 }, 12);
-
-  T({ nube: 0 }, 12, 30);
-  T({ noche: 0 }, 14, 22);
-  T({ bordes: 0.5, az: -32, el: 30, dist: 128 }, 12, 30);
-
-  // B · Coordinar: las redes reales del Piso 2 se trazan y aparece el punto crítico
-  T({ verHasta: nivelP2, corteY: elevP2 + 2.75, cerr: 0.92, bordes: 0.22, mep: 1, ctx: 0, az: 14, el: 52, dist: 44, ty: elevP2 + 2, tx: cm.x, tz: cm.z, shift: 0.16 }, 25, 5, 'power2.inOut');
-  T({ dibujo: 1 }, 29, 16, 'power1.in');
-  T({ alerta: 1 }, 44, 2);
-  T({ tx: cp.x, ty: cp.y, tz: cp.z, dist: 9, el: 38, az: 40 }, 45, 6, 'power2.inOut');
-  T({ dist: 40, el: 50, az: 0, tx: cm.x, tz: cm.z, ty: elevP2 + 2 }, 51, 4, 'power2.inOut');
-
-  // C · Construir: los pisos pasan de modelo a obra, de abajo hacia arriba
-  T({ alerta: 0, verHasta: 9, corteY: 999, cerr: 0, mep: 0, tx: 0, tz: 0, ty: 9, az: -40, el: 24, dist: 132, shift: 0.12, bim: 0, ctx: 0.7 }, 55, 5, 'power2.inOut');
-  T({ obra: 1 }, 58, 42, 'power1.inOut');
-  T({ az: 95, el: 20, dist: 122, ctx: 1 }, 60, 45);
-  T({ bordes: 0 }, 96, 6);
-
-  // D · Entregar: gemelo digital (fachada translúcida, redes visibles)
-  T({ cerr: 0.6, mep: 1, az: 55, el: 34, dist: 96, ty: 7, tx: c2.x, tz: c2.z, ctx: 0.25 }, 105, 10, 'power2.inOut');
-  T({ cerr: 0, mep: 0, az: 15, el: 22, dist: 125, ty: 9, tx: 0, tz: 0, ctx: 1 }, 120, 10, 'power2.inOut');
-
-  // Una tarjeta por tema, vinculada a la posición del scroll.
-  FASES.forEach((f, i) => {
-    const el = `.escena[data-e="${i + 1}"]`; const fin = FASES[i + 1]?.t0 ?? T_FIN;
-    if (i === 0) gsap.set(el, { autoAlpha: 1 });
-    else tl.fromTo(el, { autoAlpha: 0, y: 50 }, { autoAlpha: 1, y: 0, duration: 2, ease: 'power2.out' }, f.t0 + 1);
-    if (i < FASES.length - 1) tl.to(el, { autoAlpha: 0, y: -50, duration: 2 }, fin - 2.5);
-  });
-  tl.set({}, {}, T_FIN);
-
-  $('#marcas').innerHTML = FASES.map((f) => `<li style="top:${(f.t0 / T_FIN) * 100}%">${f.k} · ${f.nombre}</li>`).join('');
-  st = ScrollTrigger.create({
-    trigger: '#escenario', start: 'top top', end: () => '+=' + innerHeight * 6,
-    pin: true, anticipatePin: 1, scrub: true, invalidateOnRefresh: true, animation: tl,
+// ───────────────────────── sección de capas (fijada) ─────────────────────────
+let pasoCapa = -1;
+function construirCapas() {
+  const elem = (c: Disc) => mepCats.filter((m) => CATS[m.nombre]?.disc === c);
+  $('#pasosCapas').innerHTML = CAPAS.map((c, i) => `<li data-i="${i}" style="--c:${c.color}"><i></i><span class="t">${c.d}</span><span class="p"><b></b></span></li>`).join('');
+  $('#tarjetasCapa').innerHTML = CAPAS.map((c, i) => {
+    let filas: string;
+    if (i < 2) {
+      const cats = Object.entries(CATS).filter(([, v]) => v.disc === c.d).map(([k, v]) => {
+        const tris = niveles.reduce((s, n) => s + (n.info.cats.find((x) => x.nombre === k) ? 1 : 0), 0);
+        return tris ? `<li>${v.nombre}<b>${tris} niveles</b></li>` : '';
+      });
+      filas = cats.join('');
+    } else filas = elem(c.d).map((m) => `<li>${CATS[m.nombre].nombre}<b>${m.elementos.toLocaleString('es-CO')} elem.</b></li>`).join('');
+    return `<div class="glass tcapa" style="--c:${c.color}"><span class="num">CAPA 0${i + 1} / 06</span><h3><i></i>${c.d}</h3><p>${c.texto}</p><ul>${filas}</ul></div>`;
+  }).join('');
+  const tarjetas = [...document.querySelectorAll<HTMLElement>('.tcapa')];
+  const barras = [...document.querySelectorAll<HTMLElement>('#pasosCapas .p b')];
+  const activar = (i: number) => {
+    if (i === pasoCapa) return;
+    const prev = pasoCapa; pasoCapa = i;
+    document.querySelectorAll('#pasosCapas li').forEach((li, k) => li.classList.toggle('on', k === i));
+    if (prev >= 0) gsap.to(tarjetas[prev], { autoAlpha: 0, rotateY: i > prev ? -35 : 35, x: i > prev ? -120 : 120, z: -200, filter: 'blur(10px)', duration: 0.6, ease: 'power2.in', overwrite: true });
+    gsap.fromTo(tarjetas[i], { autoAlpha: 0, rotateY: i > prev ? 40 : -40, x: i > prev ? 160 : -160, z: -260, filter: 'blur(14px)' },
+      { autoAlpha: 1, rotateY: 0, x: 0, z: 0, filter: 'blur(0px)', duration: 0.95, ease: 'power3.out', delay: prev >= 0 ? 0.2 : 0, overwrite: true });
+    gsap.fromTo(tarjetas[i].querySelectorAll('li'), { autoAlpha: 0, x: 30 }, { autoAlpha: 1, x: 0, stagger: 0.06, duration: 0.5, delay: 0.5 });
+    if (modo === 'cine') { const p = PASOS_CAPAS[i]; gsap.to(S, { ...BASE, ...p.st, duration: 1.7, ease: 'power3.inOut', overwrite: 'auto' }); setCapas(p.capas); document.body.dataset.velo = ''; }
+  };
+  const stc = ScrollTrigger.create({
+    trigger: '.capas-sec', start: 'top top', end: 'bottom bottom',
     onUpdate: (self) => {
-      ($('#progreso i')).style.height = (self.progress * 100) + '%';
-      const t = self.progress * T_FIN; let e = 1; FASES.forEach((f, i) => { if (t >= f.t0) e = i + 1; });
-      if (e !== escenaActual) document.querySelectorAll('#marcas li').forEach((li, i) => li.classList.toggle('on', i === e - 1));
-      escenaActual = e;
+      const f = self.progress * CAPAS.length; const i = Math.min(CAPAS.length - 1, Math.floor(f));
+      barras.forEach((b, k) => (b.style.width = (THREE.MathUtils.clamp(f - k, 0, 1) * 100) + '%'));
+      if (self.isActive) activar(i);
     },
+    onEnter: () => { pasoCapa = -1; activar(0); },
+    onEnterBack: () => { const i = pasoCapa; pasoCapa = -1; activar(Math.max(0, i)); },
+  });
+  $('#pasosCapas').addEventListener('click', (ev) => {
+    const li = (ev.target as HTMLElement).closest<HTMLElement>('li'); if (!li) return;
+    const i = +li.dataset.i!; window.scrollTo({ top: stc.start + (stc.end - stc.start) * ((i + 0.5) / CAPAS.length), behavior: 'smooth' });
   });
 }
 
-// ───────────────────────── exploración libre (MODO B) ─────────────────────────
+// ───────────────────────── modo libre ─────────────────────────
 let scrollGuardado = 0;
-function volar(pos: THREE.Vector3, tgt: THREE.Vector3, dur = 1.4) {
+function volar(pos: THREE.Vector3, tgt: THREE.Vector3, dur = 1.5) {
   gsap.to(camera.position, { x: pos.x, y: pos.y, z: pos.z, duration: dur, ease: 'power2.inOut' });
   gsap.to(controls.target, { x: tgt.x, y: tgt.y, z: tgt.z, duration: dur, ease: 'power2.inOut' });
 }
-function entrarLibre(focoNivel?: number) {
-  if (modo === 'libre') { if (focoNivel !== undefined) enfocarNivel(focoNivel); return; }
+function entrarLibre() {
+  if (modo === 'libre') return;
   modo = 'libre'; document.body.dataset.modo = 'libre';
-  document.querySelectorAll('.modos button').forEach((b) => b.classList.toggle('on', (b as HTMLElement).dataset.modo === 'libre'));
-  scrollGuardado = scrollY; st.disable(false);
-  document.documentElement.style.overflow = 'hidden';
-  camera.clearViewOffset(); S.shift = 0;
+  scrollGuardado = scrollY; document.documentElement.style.overflow = 'hidden';
+  camera.clearViewOffset();
   controls.target.copy(objetivo); controls.enabled = true; controls.update();
-  gsap.to(S, { orto: 0, nube: 0, noche: 0, obra: 1, dibujo: 1, alerta: 0, shift: 0, duration: 0.8 });
-  $('#volver').hidden = false;
-  if (focoNivel !== undefined) enfocarNivel(focoNivel);
-  else gsap.to(S, { explode: 0, cerr: 0, bim: 0, bordes: 0, tinta: 0, verHasta: 9, corteY: 999, sel: -1, dimOtros: 0, duration: 1 });
-  pintarPanel();
+  gsap.to(S, { nube: 0, alerta: 0, obra: 1, explode: 0, duration: 0.8 });
+  vista('ext');
 }
 function salirLibre() {
   if (modo === 'cine') return;
   modo = 'cine'; document.body.dataset.modo = 'cine';
-  document.querySelectorAll('.modos button').forEach((b) => b.classList.toggle('on', (b as HTMLElement).dataset.modo === 'cine'));
-  controls.enabled = false; $('#volver').hidden = true; $('#ficha').classList.remove('on');
-  catsVisibles.clear(); Object.keys(CATS).forEach((c) => catsVisibles.add(c));
+  controls.enabled = false; $('#ficha').classList.remove('on');
   document.documentElement.style.overflow = '';
-  S.sel = -1; S.dimOtros = 0;
-  st.enable(); window.scrollTo(0, scrollGuardado); st.update(); tl.progress(st.progress);
+  window.scrollTo(0, scrollGuardado);
+  const activa = [...document.querySelectorAll<HTMLElement>('[data-escena]')].find((s) => { const r = s.getBoundingClientRect(); return r.top <= innerHeight / 2 && r.bottom >= innerHeight / 2; });
+  if (activa?.dataset.escena === 'capas') { const i = pasoCapa; pasoCapa = -1; ScrollTrigger.refresh(); if (i >= 0) { const p = PASOS_CAPAS[i]; gsap.to(S, { ...BASE, ...p.st, duration: 1.5 }); setCapas(p.capas); } }
+  else irA(activa?.dataset.escena ?? 'hero');
+}
+function vista(v: string, capas = true) {
+  const ip2 = niveles.findIndex((n) => n.info.nombre === 'PISO 2'); const e2 = niveles[ip2].info.elev;
+  const cm = cajaMep.isEmpty() ? niveles[ip2].caja.getCenter(new THREE.Vector3()) : centroMep;
+  if (v === 'salir') return salirLibre();
+  if (v === 'ext') { gsap.to(S, { ...BASE, ctx: 1, duration: 1.2 }); if (capas) setCapas(['Arquitectura', 'Estructura']); volar(new THREE.Vector3(85, 55, 95), new THREE.Vector3(0, 9, 0)); }
+  if (v === 'rx') { gsap.to(S, { cerr: 0.85, bim: 1, bordes: 0.35, ctx: 0.2, verHasta: 9, corteY: 999, explode: 0, duration: 1.2 }); if (capas) setCapas(CAPAS.map((c) => c.d)); }
+  if (v === 'exp') { const abrir = S.explode < 0.5; gsap.to(S, { explode: abrir ? 1 : 0, verHasta: 9, corteY: 999, duration: 2, ease: 'power1.inOut' }); volar(new THREE.Vector3(110, abrir ? 90 : 60, 120), new THREE.Vector3(0, abrir ? 28 : 9, 0), 2); }
+  if (v === 'p2') { gsap.to(S, { verHasta: ip2, corteY: e2 + 2.75, cerr: 0.9, bim: 1, bordes: 0.2, ctx: 0, explode: 0, duration: 1.2 }); volar(new THREE.Vector3(cm.x + 22, e2 + 30, cm.z + 26), new THREE.Vector3(cm.x, e2 + 1.5, cm.z)); }
 }
 
-let nivelSel = -1;
-function enfocarNivel(i: number) {
-  nivelSel = i;
-  const n = niveles[i]; const elev = n.info.elev;
-  const c = n.caja.getCenter(new THREE.Vector3());
-  // 1) se ilumina la planta y se atenúan las demás; la cámara se acerca
-  gsap.to(S, { sel: i, dimOtros: 1, explode: S.explode > 0.5 ? 1 : 0, duration: 0.6, overwrite: 'auto' });
-  const yN = n.grupo.position.y + elev;
-  volar(new THREE.Vector3(c.x + 46, yN + 34, c.z + 52), new THREE.Vector3(c.x, yN, c.z));
-  // 2) se activa la exploración del nivel: se retiran los superiores y se corta a 1,60 m
-  gsap.to(S, { explode: 0, verHasta: i, corteY: elev + 1.6, dimOtros: 0, duration: 1.2, delay: 1.1, ease: 'power2.inOut', overwrite: false });
-  setTimeout(() => volar(new THREE.Vector3(c.x + 30, elev + 26, c.z + 34), new THREE.Vector3(c.x, elev, c.z)), 1100);
-  pintarPanel();
-}
-function verTodo() {
-  nivelSel = -1;
-  gsap.to(S, { sel: -1, dimOtros: 0, verHasta: 9, corteY: 999, duration: 1 });
-  volar(new THREE.Vector3(85, 60, 95), new THREE.Vector3(0, 9, 0));
-  pintarPanel();
-}
-function vista(v: string) {
-  document.querySelectorAll('.vistas button').forEach((b) => b.classList.toggle('on', (b as HTMLElement).dataset.v === v || ((b as HTMLElement).dataset.v === 'explotar' && S.explode > 0.5 && v !== 'explotar')));
-  if (v !== 'plano' && S.orto > 0.01) { // salir de la planta: vuelve la perspectiva
-    gsap.to(S, { orto: 0, verHasta: 9, corteY: 999, duration: 1.2 });
-    volar(new THREE.Vector3(85, 60, 95), new THREE.Vector3(0, 9, 0));
-  }
-  if (v === 'arq') gsap.to(S, { bim: 0, cerr: 0, bordes: 0, tinta: 0, ctx: 1, mep: 0, duration: 1 });
-  if (v === 'bim') gsap.to(S, { bim: 1, cerr: 1, bordes: 0.55, tinta: 0, ctx: 0.3, mep: 1, duration: 1 });
-  if (v === 'explotar') {
-    const abrir = S.explode < 0.5;
-    gsap.to(S, { explode: abrir ? 1 : 0, verHasta: 9, corteY: 999, duration: 2, ease: 'power1.inOut' });
-    volar(new THREE.Vector3(95, abrir ? 85 : 60, 105), new THREE.Vector3(0, abrir ? 28 : 9, 0), 2);
-  }
-  if (v === 'plano') {
-    const i = nivelSel >= 0 ? nivelSel : niveles.findIndex((n) => n.info.nombre === 'PISO 2');
-    const elev = niveles[i].info.elev; nivelSel = i;
-    gsap.to(S, { explode: 0, bim: 1, cerr: 0, bordes: 1, tinta: 1, verHasta: i, corteY: elev + 1.6, sel: -1, dimOtros: 0, orto: 1, ctx: 0, duration: 1.6 });
-    // FOV 5° (casi ortográfica): distancia para encuadrar ~90 m de planta
-    const d = 45 / Math.tan(THREE.MathUtils.degToRad(2.5));
-    volar(new THREE.Vector3(0, elev + d, 0.01), new THREE.Vector3(0, elev, 0), 1.6);
-    pintarPanel();
-  }
-}
-
-function pintarPanel() {
-  $('#listaNiveles').innerHTML = `<li data-n="-1" class="${nivelSel < 0 ? 'sel' : ''}">Edificio completo</li>` +
-    niveles.map((n, i) => `<li data-n="${i}" class="${nivelSel === i ? 'sel' : ''}">${n.info.nombre}<small>+${n.info.elev.toFixed(2)} m</small></li>`).join('');
-  $('#listaDisc').innerHTML = DISCS.filter((d) => Object.entries(CATS).some(([c, v]) => v.disc === d && niveles.some((n) => n.mats.has(c)))).map((d) => {
-    const on = Object.entries(CATS).some(([c, v]) => v.disc === d && catsVisibles.has(c));
-    return `<li data-d="${d}" class="${on ? '' : 'off'}">${d}<small>${on ? 'visible' : 'oculta'}</small></li>`;
-  }).join('');
-  $('#listaCats').innerHTML = Object.entries(CATS).filter(([c]) => niveles.some((n) => n.mats.has(c)))
-    .map(([c, v]) => `<li data-c="${c}" class="${catsVisibles.has(c) ? '' : 'off'}">${v.nombre}<small>${v.disc}</small></li>`).join('');
-}
-
-// ───────────────────────── selección ─────────────────────────
+// ───────────────────────── selección (modo libre) ─────────────────────────
 const ray = new THREE.Raycaster(); const ptr = new THREE.Vector2();
-function pick(ev: PointerEvent) {
-  ptr.set(ev.clientX / innerWidth * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
-  ray.setFromCamera(ptr, camera);
-  const hits = ray.intersectObjects(pickables.filter((m) => (m.material as THREE.Material).visible && niveles[m.userData.nivel].vis > 0.3), false);
-  // descarta lo que queda por encima del plano de corte
-  return hits.find((h) => h.point.y <= corte.constant + 0.01);
-}
 let downAt = 0;
 canvas.addEventListener('pointerdown', () => { downAt = performance.now(); });
 canvas.addEventListener('pointerup', (ev) => {
-  if (performance.now() - downAt > 300) return; // fue un arrastre
-  const h = pick(ev); if (!h) return;
-  const i = h.object.userData.nivel as number;
-  if (modo === 'cine') {
-    if (escenaActual === 3) entrarLibre(i); else if (escenaActual > 1) entrarLibre();
-    return;
-  }
-  const cat = h.object.userData.cat as string; const n = niveles[i];
-  $('#ficha').innerHTML = `<h4>${n.info.nombre} · ${CATS[cat].nombre}</h4><dl>
-    <dt>Disciplina</dt><dd>${CATS[cat].disc}</dd>
-    <dt>Nivel</dt><dd>${n.info.nombre} (+${n.info.elev.toFixed(2)} m)</dd>
-    <dt>Punto</dt><dd>z = ${(h.point.y - n.grupo.position.y).toFixed(2)} m</dd>
-    <dt>Geometría</dt><dd>${h.object.userData.tris.toLocaleString('es-CO')} triángulos en la categoría</dd>
-    <dt>Fuente</dt><dd>${CATS[cat].mep ? '1001_Hotel_la_fotona_redes.rvt · ' + h.object.userData.elementos + ' elementos' : 'HLF_P2-P6.rvt'}</dd></dl>`;
+  if (modo !== 'libre' || performance.now() - downAt > 300) return;
+  ptr.set(ev.clientX / innerWidth * 2 - 1, -(ev.clientY / innerHeight) * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+  const h = ray.intersectObjects(pickables.filter((m) => (m.material as THREE.Material).visible && (m.material as THREE.Material).opacity > 0.3), false).find((x) => x.point.y <= corte.constant + 0.01);
+  if (!h) { $('#ficha').classList.remove('on'); return; }
+  const n = niveles[h.object.userData.nivel]; const cat = h.object.userData.cat as string; const def = CATS[cat];
+  $('#ficha').innerHTML = `<h4>${def.nombre}</h4><dl><dt>Capa</dt><dd>${def.disc}</dd><dt>Nivel</dt><dd>${n.info.nombre} (+${n.info.elev.toFixed(2)} m)</dd>
+    <dt>Cota</dt><dd>${(h.point.y - n.grupo.position.y).toFixed(2)} m</dd>
+    <dt>Fuente</dt><dd>${def.mep ? '1001_Hotel_la_fotona_redes.rvt · ' + h.object.userData.elementos + ' elementos' : 'HLF_P2-P6.rvt'}</dd></dl>`;
   $('#ficha').classList.add('on');
-  if (nivelSel !== i) enfocarNivel(i);
-});
-canvas.addEventListener('pointermove', (ev) => {
-  const activo = modo === 'libre' || escenaActual > 1;
-  const h = activo ? pick(ev) : undefined;
-  canvas.style.cursor = h ? 'pointer' : '';
-  if (modo === 'cine' && escenaActual === 3) S.sel = h ? h.object.userData.nivel : -1;
 });
 
 // ───────────────────────── UI ─────────────────────────
 function ui() {
-  document.querySelectorAll<HTMLButtonElement>('.modos button').forEach((b) => b.addEventListener('click', () => b.dataset.modo === 'libre' ? entrarLibre() : salirLibre()));
-  $('#volver').addEventListener('click', salirLibre);
-  document.querySelectorAll<HTMLButtonElement>('.vistas button').forEach((b) => b.addEventListener('click', () => vista(b.dataset.v!)));
-  $('#listaNiveles').addEventListener('click', (e) => {
-    const li = (e.target as HTMLElement).closest('li'); if (!li) return;
-    const n = +li.dataset.n!; n < 0 ? verTodo() : enfocarNivel(n);
+  $('#capas').innerHTML = CAPAS.map((c) => `<button class="capa" data-d="${c.d}" style="--c:${c.color}"><i></i>${c.corto}</button>`).join('');
+  $('#capas').addEventListener('click', (e) => { const b = (e.target as HTMLElement).closest<HTMLElement>('.capa'); if (b) toggleCapa(b.dataset.d as Disc); });
+  pintarDock();
+  document.querySelectorAll('[data-explorar]').forEach((b) => b.addEventListener('click', entrarLibre));
+  document.querySelectorAll<HTMLElement>('#vistasLibres button').forEach((b) => b.addEventListener('click', () => vista(b.dataset.v!)));
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') salirLibre(); });
+  addEventListener('pointermove', (ev) => { U.tpx = ev.clientX / innerWidth - 0.5; U.tpy = ev.clientY / innerHeight - 0.5; });
+  // escenas por sección: al entrar (bajando o subiendo) el modelo se transforma
+  document.querySelectorAll<HTMLElement>('[data-escena]').forEach((sec) => {
+    const n = sec.dataset.escena!; if (n === 'capas') return;
+    ScrollTrigger.create({ trigger: sec, start: 'top 55%', end: 'bottom 45%', onEnter: () => irA(n), onEnterBack: () => irA(n) });
   });
-  $('#listaDisc').addEventListener('click', (e) => {
-    const li = (e.target as HTMLElement).closest('li'); if (!li?.dataset.d) return;
-    const cats = Object.entries(CATS).filter(([, v]) => v.disc === li.dataset.d).map(([c]) => c);
-    const on = cats.some((c) => catsVisibles.has(c));
-    cats.forEach((c) => on ? catsVisibles.delete(c) : catsVisibles.add(c));
-    if (!on && Object.entries(CATS).some(([c, v]) => v.disc === li.dataset.d && v.mep)) gsap.to(S, { mep: 1, cerr: Math.max(S.cerr, 0.8), duration: 1 });
-    pintarPanel();
-  });
-  $('#listaCats').addEventListener('click', (e) => {
-    const li = (e.target as HTMLElement).closest('li'); if (!li?.dataset.c) return;
-    const c = li.dataset.c; catsVisibles.has(c) ? catsVisibles.delete(c) : catsVisibles.add(c); pintarPanel();
-  });
-  addEventListener('keydown', (e) => { if (e.key === 'Escape' && modo === 'libre') salirLibre(); });
-  landing();
-}
-
-// ───────────────────────── landing: interacciones dentro del recorrido ─────────────────────────
-function irAFase(f: number) {
-  const t = (FASES[f - 1]?.t0 ?? 0) + 6;
-  window.scrollTo({ top: st.start + (st.end - st.start) * (t / T_FIN), behavior: 'smooth' });
-}
-function landing() {
-  addEventListener('pointermove', (ev) => { if (modo === 'cine') { U.tpx = ev.clientX / innerWidth - 0.5; U.tpy = ev.clientY / innerHeight - 0.5; } });
-  document.querySelectorAll<HTMLElement>('[data-ir]').forEach((b) => b.addEventListener('click', () => irAFase(+b.dataset.ir!)));
-  $('#marcas').addEventListener('click', (e) => { const li = (e.target as HTMLElement).closest('li'); if (li) irAFase([...li.parentElement!.children].indexOf(li) + 1); });
-  // simulador (sección de inversión)
-  let integrada = false;
-  const M = (v: number) => '$' + v.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' M';
-  const vis = { total: 0, iva: 0, eq: 0 };
-  const calc = () => {
-    const meses = +$<HTMLInputElement>('#rMeses').value, obra = +$<HTMLInputElement>('#rObra').value;
-    $('#vMeses').textContent = meses + ' meses'; $('#vObra').textContent = '$' + obra.toLocaleString('es-CO') + ' M';
-    const total = 111 + meses * (integrada ? 13.8 : 23);
-    gsap.to(vis, { total, iva: total * 1.19, eq: (100 * total) / obra, duration: 0.6, ease: 'power2.out', onUpdate: () => {
-      $('#oTotal').textContent = M(Math.round(vis.total * 10) / 10);
-      $('#oIva').textContent = M(Math.round(vis.iva * 10) / 10);
-      $('#oEq').textContent = vis.eq.toFixed(2).replace('.', ',') + ' %';
-    } });
-  };
-  $('#rMeses').addEventListener('input', calc); $('#rObra').addEventListener('input', calc);
-  $('#segModo').addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLElement>('button'); if (!b) return;
-    integrada = b.dataset.m === 'int';
-    document.querySelectorAll('#segModo button').forEach((x) => x.classList.toggle('on', x === b)); calc();
-  });
-  calc();
+  ScrollTrigger.create({ start: 0, end: 'max', onUpdate: (s) => { $('#barra i').style.width = (s.progress * 100) + '%'; U.drift = s.progress; } });
 }
 
 // ───────────────────────── bucle ─────────────────────────
-function resize() {
-  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-}
-addEventListener('resize', resize);
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+let t0 = performance.now();
 function frame() {
+  const now = performance.now(); const dt = Math.min(0.05, (now - t0) / 1000); t0 = now;
   const E = { ...S };
   if (modo === 'cine') {
-    U.px += (U.tpx - U.px) * 0.05; U.py += (U.tpy - U.py) * 0.05;
-    E.az += U.px * 7 * (1 - E.orto); E.el = THREE.MathUtils.clamp(E.el - U.py * 3 * (1 - E.orto), 2, 89.6);
+    U.px += (U.tpx - U.px) * 0.04; U.py += (U.tpy - U.py) * 0.04;
+    S.giro += dt * 1.6; // órbita lenta permanente: nada queda quieto
+    E.az += U.px * 8 + U.drift * 40; E.el = THREE.MathUtils.clamp(E.el - U.py * 4, 3, 85);
+    aplicar(E); camaraDesde(E);
+  } else { aplicar(E); controls.update(); }
+  // etiqueta del punto crítico
+  if (marcaCritico) {
+    const el = $('#etqCritico');
+    const p = marcaCritico.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0, 0.7, 0)).project(camera);
+    el.style.opacity = String(modo === 'cine' ? S.alerta : 0);
+    el.style.left = ((p.x + 1) / 2 * innerWidth) + 'px'; el.style.top = ((1 - p.y) / 2 * innerHeight - 10) + 'px';
   }
-  // pasado el recorrido, las secciones comerciales tapan el lienzo: no se dibuja
-  const pasado = modo === 'cine' && !!st && scrollY > st.end + 20;
-  document.body.classList.toggle('pasado', pasado);
-  if (pasado) { requestAnimationFrame(frame); return; }
-  aplicar(E);
-  if (modo === 'cine') camaraDesde(E);
-  else { controls.update(); camera.fov = THREE.MathUtils.lerp(35, 5, S.orto); camera.near = 0.5 + 20 * S.orto; camera.far = 4000; camera.updateProjectionMatrix(); }
-  actualizarEtiquetas();
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
 
 (async () => {
   const man = await cargar();
-  cargarContexto(man.enu).catch((e) => console.warn('contexto', e));
+  definirEscenas();
+  const etq = document.createElement('div'); etq.className = 'etq'; etq.id = 'etqCritico'; etq.textContent = 'Interferencia · RCI ↔ conduit'; $('#etiquetas').appendChild(etq);
+  if (critico.ok) $('#dCritico').textContent = (critico.d * 100).toFixed(1).replace('.', ',') + ' cm';
   ui();
-  // etiqueta anclada al punto crítico real del modelo de redes
-  const wp = new THREE.Vector3();
-  etiqueta('Punto crítico · RCI ↔ conduit', () => (marcaCritico ? marcaCritico.getWorldPosition(wp).add(new THREE.Vector3(0, 0.9, 0)) : wp),
-    () => (modo === 'cine' && marcaCritico ? S.alerta : 0), () => entrarLibre(niveles.findIndex((n) => n.info.nombre === 'PISO 2')));
-  construirRecorrido();
-  iniciarComercial({
-    redes: (mepInfo?.cats ?? []).filter((c) => CATS[c.nombre]).map((c) => ({ nombre: CATS[c.nombre].nombre, disc: CATS[c.nombre].disc, color: CATS[c.nombre].arq === '#0e3064' ? '#7fa6e0' : CATS[c.nombre].arq, elementos: c.elementos, tris: c.tLen! / 3 })),
-    niveles: niveles.map((n) => ({ nombre: n.info.nombre, cats: n.info.cats.filter((c) => CATS[c.nombre]).map((c) => ({ nombre: CATS[c.nombre].nombre, tris: (c.tLen ?? c.vLen / 3) / 3, color: c.nombre === 'cubiertas' ? '#a5563b' : CATS[c.nombre].arq })) })),
-  });
-  document.querySelector('[data-arriba]')?.addEventListener('click', () => irAFase(1));
-  document.querySelector('[data-explorar]')?.addEventListener('click', () => entrarLibre());
-  pintarPanel();
-  $('#cargando').classList.add('fin');
-  gsap.from('.titulo .w', { yPercent: 110, opacity: 0, stagger: 0.14, duration: 1.4, ease: 'power3.out', delay: 0.3 });
+  construirCapas();
+  iniciarAnimaciones();
+  iniciarHonorarios();
+  iniciarObra();
+  iniciarActores();
+  iniciarHabitacion();
+  iniciarCarrusel();
+  $('#cargando i b').style.width = '100%';
+  setTimeout(() => $('#cargando').classList.add('fin'), 250);
   frame();
+  // apertura: la nube de escaneo se solidifica en el edificio
+  gsap.to(S, { nube: 0, duration: 3.2, delay: 0.6, ease: 'power2.inOut' });
+  setCapas(['Arquitectura', 'Estructura'], 0);
+  cargarContexto(man.enu).catch((e) => console.warn('contexto', e));
+  ScrollTrigger.refresh();
 })();

@@ -3,203 +3,254 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Torre Suites · BIM Experience · Estelar La Fontana</title>
+<title>BACO · Torre Suites BIM</title>
+<meta name="description" content="Propuesta BIM de BACO Studio para la remodelación de Torre Suites: un modelo, seis especialidades, de LOD 300 a gemelo digital." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@200;300;400&family=Space+Grotesk:wght@300;400;500&family=Archivo:wght@400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="./src/style.css" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="./src/landing.css" />
 </head>
 <body data-modo="cine">
+<div id="glow"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div>
 <canvas id="gl"></canvas>
 <div id="velo"></div>
 <div id="etiquetas"></div>
 
-<header id="barra">
-  <div class="izq">Torre Suites <span>BIM Experience</span></div>
-  <a class="logos" href="#" aria-label="Inicio">
-    <img src="./logos/estelar.png" alt="Estelar" />
-    <i></i>
-    <img src="./logos/baco.png" alt="Baco Studio" class="baco" />
-  </a>
-  <nav class="modos">
-    <button data-modo="cine" class="on">Recorrido</button>
-    <button data-modo="libre">Explorar 3D</button>
-  </nav>
+<header id="top">
+  <a href="#hero" class="marca"><img src="./logos/baco.png" alt="BACO Studio" /><span>BACO <b>STUDIO</b></span></a>
+  <p class="ruta">Torre Suites <i>/</i> Propuesta BIM <i>/</i> v03</p>
+  <button class="btn-explorar" data-explorar>Explorar el modelo</button>
+  <div id="barra"><i></i></div>
 </header>
 
-<!-- MODO A: landing; el scroll mueve la cámara y transforma el edificio -->
-<div id="recorrido">
-  <section id="escenario">
-    <div class="hud">
-      <div class="escena hero" data-e="1">
-        <p class="hero-k">BACO Studio · Estelar La Fontana · Torre Suites</p>
-        <h1 class="titulo"><span class="w">El futuro se construye</span> <span class="w">antes de construir.</span></h1>
-        <div class="hero-der">
-          <p>La transformación de Estelar comienza con BIM. Una nueva forma de visualizar, coordinar y gestionar cada espacio antes, durante y después de su intervención.</p>
-          <button class="pill" data-ir="2">Explorar experiencia <span>↓</span></button>
+<!-- Dock de capas: siempre disponible -->
+<nav id="dock" aria-label="Capas del modelo">
+  <span class="dock-t">Capas</span>
+  <div id="capas"></div>
+  <span class="dock-sep"></span>
+  <div id="vistasLibres">
+    <button data-v="ext">Exterior</button>
+    <button data-v="rx">Rayos X</button>
+    <button data-v="exp">Explotar</button>
+    <button data-v="p2">Piso 2</button>
+    <button data-v="salir" class="salir">Salir ✕</button>
+  </div>
+</nav>
+
+<main id="paginas">
+
+  <!-- 00 HERO -->
+  <section class="esc hero" id="hero" data-escena="hero">
+    <div class="txt">
+      <p class="k" data-a="up">BACO STUDIO · Torre Suites · Hotel Estelar La Fontana</p>
+      <h1 data-a="words">Construir antes<br/>de <b>construir</b></h1>
+      <p class="lead" data-a="up">Implementación, gestión y coordinación BIM de la remodelación: desde el modelo de condiciones existentes LOD 300 hasta la coordinación LOD 400, la gestión durante la obra y el activo digital para mantenimiento.</p>
+      <div class="stats" data-a="stagger">
+        <div class="glass stat"><small>Área de referencia</small><b data-n="10000" data-fmt="m2">0</b></div>
+        <div class="glass stat"><small>Especialidades</small><b>4 a 6</b></div>
+        <div class="glass stat"><small>Plazo base</small><b data-n="12" data-suf=" meses">0</b></div>
+      </div>
+      <p class="scroll-hint" data-a="up"><span></span>Desliza: cada paso transforma el modelo</p>
+    </div>
+  </section>
+
+  <!-- 01 PROBLEMA -->
+  <section class="esc centro" data-escena="problema">
+    <div class="txt">
+      <p class="k" data-a="up">01 · El reto</p>
+      <h2 class="tachado"><span data-a="words">Una remodelación no se</span> <span class="strike" data-a="strike">improvisa</span> <span class="nueva" data-a="deblur">coordina</span></h2>
+      <p class="lead" data-a="up">Ordenar las obligaciones de cada especialista, reducir interferencias de diseño y mantener la trazabilidad de los cambios hasta la entrega del activo digital.</p>
+    </div>
+    <div class="nube-chips" data-a="chips">
+      <span class="chip c-rojo">Interferencias</span><span class="chip">RFI</span><span class="chip">Cambios de campo</span>
+      <span class="chip">Versiones vigentes</span><span class="chip c-oro">Condiciones ocultas</span><span class="chip">Alturas libres</span>
+      <span class="chip">Pasos de instalaciones</span><span class="chip">Accesos de mantenimiento</span><span class="chip c-oro">Constructibilidad</span>
+      <span class="chip">Registros</span>
+    </div>
+  </section>
+
+  <!-- 02 ESCANEO -->
+  <section class="esc izq" data-escena="escaneo">
+    <div class="txt">
+      <p class="k" data-a="up">02 · Punto de partida</p>
+      <h2 data-a="words">Partimos de lo que <b>existe</b></h2>
+      <p class="lead" data-a="up">El escaneo 3D y el modelo de condiciones existentes LOD 300 los ejecuta un proveedor independiente contratado por el propietario. BACO revisa técnicamente la entrega.</p>
+      <div class="glass leyendo" data-a="fly">
+        <p class="mini">✦ Revisando entrega LOD 300…</p>
+        <b class="pct" data-n="100" data-suf="%">0</b>
+        <div class="barra"><i></i></div>
+        <div class="checks">
+          <span>Archivos</span><span>Coordenadas</span><span>Consistencia geométrica</span><span>Zonas no verificadas</span><span>Observaciones</span>
         </div>
       </div>
-
-      <div class="escena tarjeta" data-e="2">
-        <p class="kicker">01. TIEMPO</p>
-        <h2>Anticipar <em>para avanzar.</em></h2>
-        <p>Detectamos interferencias antes de la obra, optimizamos la planificación y reducimos retrasos durante las remodelaciones.</p>
-      </div>
-
-      <div class="escena tarjeta" data-e="3">
-        <p class="kicker">02. DINERO</p>
-        <h2>Cada decisión <em>cuenta.</em></h2>
-        <p>Reducimos el riesgo de sobrecostos, reprocesos y desperdicios mediante cantidades precisas y un mayor control presupuestal.</p>
-      </div>
-
-      <div class="escena tarjeta" data-e="4">
-        <p class="kicker">03. GESTIÓN</p>
-        <h2>Todo conectado. <em>Todo bajo control.</em></h2>
-        <p>Centralizamos planos, especialidades, avances y novedades en un único modelo digital para tomar mejores decisiones.</p>
-      </div>
-    </div>
-    <div id="progreso"><i></i><ol id="marcas"></ol></div>
-  </section>
-</div>
-
-<main id="comercial">
-  <!-- I · EL DESAFÍO -->
-  <section class="sec" id="desafio">
-    <div class="sec-in">
-      <p class="kicker">Acto I · El desafío</p>
-      <h2>Una intervención <em>de gran escala</em></h2>
-      <p class="lead reveal">En una remodelación, lo desconocido cuesta tiempo, decisiones y coordinación.</p>
-      <div class="cuatro">
-        <div class="cifra reveal"><b><span data-n="10000">0</span></b><small>m² aproximados</small><p>Área de referencia de la remodelación de la Torre Suites.</p></div>
-        <div class="cifra reveal"><b>4–<span data-n="6">0</span></b><small>paquetes técnicos</small><p>Arquitectura e interiorismo, estructura, hidrosanitaria, eléctrica y especialidades adicionales.</p></div>
-        <div class="cifra reveal"><b><span data-n="12">0</span></b><small>meses · base</small><p>3 de preconstrucción, 8 de obra y 1 de cierre digital.</p></div>
-        <div class="cifra reveal"><b><span data-n="1">0</span></b><small>fuente coordinada</small><p>Un modelo federado al que acceden todos los especialistas.</p></div>
-      </div>
-      <p class="frase reveal">El problema no es solo diseñar. <em>Es coordinar las decisiones.</em></p>
     </div>
   </section>
 
-  <!-- I · RIESGOS -->
-  <section class="sec crema" id="riesgos">
-    <div class="sec-in">
-      <p class="kicker">Riesgos</p>
-      <h2>Cuatro riesgos <em>que podemos anticipar</em></h2>
-      <p class="nota reveal">Ejemplos habituales de remodelación; no representan hallazgos reales de la Torre Suites. Toca una tarjeta para ver cómo se gestiona.</p>
-      <div class="riesgos">
-        <button class="riesgo"><div class="cara"><span class="num">01</span><svg viewBox="0 0 64 64"><path d="M6 40h52M24 14v36" /><circle cx="24" cy="40" r="7" /></svg><b>Interferencias</b><p>Ductos, tuberías y estructura compiten por el espacio.</p></div><div class="dorso"><b>Federación y control</b><p>Revisión de interferencias, alturas libres y pasos de instalaciones en el modelo federado, con responsable y plazo por incidencia.</p></div></button>
-        <button class="riesgo"><div class="cara"><span class="num">02</span><svg viewBox="0 0 64 64"><path d="M14 32a18 18 0 1 0 6-13" /><path d="M14 10v10h10" /></svg><b>Reprocesos</b><p>Descubrir una incompatibilidad después de instalar.</p></div><div class="dorso"><b>Coordinar antes de construir</b><p>Mesas técnicas y paquetes coordinados publicados para construcción antes de que el frente avance.</p></div></button>
-        <button class="riesgo"><div class="cara"><span class="num">03</span><svg viewBox="0 0 64 64"><rect x="12" y="10" width="28" height="36" /><rect x="24" y="18" width="28" height="36" /></svg><b>Versiones distintas</b><p>Ejecutar con información no vigente.</p></div><div class="dorso"><b>CDE y versiones</b><p>Entorno común de datos con estados de revisión; en obra se verifica que se construya con modelos y planos vigentes.</p></div></button>
-        <button class="riesgo"><div class="cara"><span class="num">04</span><svg viewBox="0 0 64 64"><circle cx="28" cy="28" r="14" /><path d="M38 38l14 14" /></svg><b>Mantenimiento</b><p>Buscar redes y equipos sin registro confiable.</p></div><div class="dorso"><b>Activo digital</b><p>As-built, inventario de equipos con fichas, manuales y garantías, entregado al equipo de mantenimiento.</p></div></button>
+  <!-- 03 CAPAS (fijada, 6 pasos) -->
+  <section class="esc capas-sec" data-escena="capas">
+    <div class="pin">
+      <div class="txt">
+        <p class="k" data-a="up">03 · Federación de modelos</p>
+        <h2 data-a="words">Un modelo.<br/><b>Seis capas.</b></h2>
+        <p class="lead" data-a="up">Arquitectura e interiorismo, estructura, hidrosanitaria, red contra incendios, eléctrica y mecánica, federadas y coordinadas. Prende y apaga cada capa abajo cuando quieras.</p>
+        <ol class="pasos" id="pasosCapas" data-a="stagger"></ol>
       </div>
+      <div class="tarjetas-capa" id="tarjetasCapa"></div>
     </div>
   </section>
 
-  <!-- I · EL CAMBIO -->
-  <section class="sec" id="cambio">
-    <div class="sec-in">
-      <p class="kicker">El cambio</p>
-      <h2>De resolver en obra <em>a coordinar antes</em></h2>
-      <p class="nota reveal">BIM no elimina la incertidumbre. Organiza el proceso para detectarla y gestionarla. Arrastra la línea.</p>
-      <div class="comparar reveal">
-        <div class="lado sin"><small>Sin coordinación</small><ul><li>Diseños aislados</li><li>Conflictos descubiertos al instalar</li><li>Cambios sin trazabilidad central</li><li>Entrega documental dispersa</li></ul></div>
-        <div class="lado con"><small>Con gestión BIM</small><ul><li>Modelos federados y revisados</li><li>Incidencias con responsable y plazo</li><li>Cambios y versiones trazables</li><li>Información del activo consultable</li></ul></div>
-        <div class="mango"><span>⟷</span></div>
+  <!-- 04 PUNTO CRÍTICO -->
+  <section class="esc izq" data-escena="critico">
+    <div class="txt">
+      <p class="k" data-a="up">04 · Coordinación de diseños</p>
+      <h2 data-a="words">El conflicto aparece en el <b>modelo</b>, no en la obra</h2>
+      <div class="glass alerta" data-a="fly">
+        <span class="punto"></span>
+        <div><small>Interferencia detectada · Piso 2</small><b>Red contra incendios ↔ conduit</b><p>Separación mínima medida en el modelo de redes: <strong id="dCritico">—</strong></p></div>
       </div>
+      <div class="chat">
+        <div class="glass msg" data-a="msg"><i>BIM</i><p>Interferencia entre rociador y conduit en Piso 2. Queda asignada en la mesa técnica.</p></div>
+        <div class="glass msg der" data-a="msg"><i>ELE</i><p>Ajusto el trazado y publico la versión actualizada en el CDE.</p></div>
+        <div class="glass msg" data-a="msg"><i>PRO</i><p>Aprobado. Queda en el registro de decisiones.</p></div>
+      </div>
+      <p class="nota" data-a="up">Flujo ilustrativo de la mesa BIM. El punto crítico sí es real: se calcula en vivo sobre 1001_Hotel_la_fotona_redes.rvt.</p>
     </div>
   </section>
 
-  <!-- III · CONTROL DE GESTIÓN (ilustrativo) -->
-  <section class="sec azul" id="tablero">
-    <div class="sec-in">
-      <p class="kicker">Control de gestión</p>
-      <h2>Información ejecutiva <em>para decidir</em></h2>
-      <p class="nota reveal">Ejemplo de tablero mensual de la presentación: indicadores ilustrativos, no resultados del proyecto.</p>
-      <div class="kpis">
-        <div class="kpi anillo-caja reveal"><svg viewBox="0 0 180 180"><circle cx="90" cy="90" r="70" class="fondo" /><circle id="tAnillo" cx="90" cy="90" r="70" class="valor" transform="rotate(-90 90 90)" /></svg><div><b><span data-n="18">0</span>/24</b><small>Incidencias cerradas</small></div></div>
-        <div class="kpi reveal"><b data-n="6">0</b><small>Pendientes</small></div>
-        <div class="kpi reveal"><b><span data-n="4">0</span>/5</b><small>Entregas vigentes</small></div>
-        <div class="kpi reveal"><b data-n="2">0</b><small>Decisiones por escalar</small></div>
-      </div>
-      <div class="registro reveal">
-        <div class="seg claro" id="tFiltros"><button data-f="todas" class="on">Todas</button><button data-f="cerrada">Cerradas</button><button data-f="revision">En revisión</button><button data-f="decidir">Por decidir</button></div>
-        <ul id="tLista">
-          <li data-e="cerrada"><code>BIM-017</code><span>Interfaz ducto / viga</span><em>Climatización</em><i class="st cerrada">Cerrada</i></li>
-          <li data-e="revision"><code>BIM-021</code><span>Acceso a válvula</span><em>Hidrosanitaria</em><i class="st revision">En revisión</i></li>
-          <li data-e="decidir"><code>BIM-024</code><span>Paso de bandeja</span><em>Eléctrica / gerencia</em><i class="st decidir">Por decidir</i></li>
-        </ul>
-      </div>
+  <!-- 05 ETAPAS -->
+  <section class="esc izq ancho" data-escena="etapas">
+    <div class="txt">
+      <p class="k" data-a="up">05 · Modelo de servicio</p>
+      <h2 data-a="words">Cuatro etapas. <b>12 meses.</b></h2>
+    </div>
+    <div class="etapas">
+      <article class="glass etapa" data-a="flip" data-tilt><span class="letra">A</span><small>1 mes</small><h3>Estructuración BIM y contratación</h3><p>BEP marco y operativo, requisitos EIR/AIR, matriz LOD 400, protocolo CDE y anexos de contratación.</p><em>Obligaciones BIM integradas a contratos</em></article>
+      <article class="glass etapa" data-a="flip" data-tilt><span class="letra">B</span><small>2 meses</small><h3>Coordinación de diseños</h3><p>Federación de modelos, mesas técnicas, control de interferencias y registro de incidencias.</p><em>Trazabilidad de conflictos y decisiones</em></article>
+      <article class="glass etapa" data-a="flip" data-tilt><span class="letra">C</span><small>8 meses</small><h3>Acompañamiento de obra</h3><p>Mesa BIM semanal, RFI y cambios, revisión LOD 400 de instalación e informe mensual.</p><em>Vigencia documental en obra</em></article>
+      <article class="glass etapa" data-a="flip" data-tilt><span class="letra">D</span><small>1 mes</small><h3>Cierre digital</h3><p>Federado as-built, planos récord, inventario de equipos y paquete de activos digitales.</p><em>Acta de transferencia</em></article>
     </div>
   </section>
 
-  <!-- IV · INVERSIÓN -->
-  <section class="sec crema" id="inversion">
-    <div class="sec-in">
-      <p class="kicker">Acto IV · Inversión</p>
-      <h2>Dos modalidades. <em>Un mismo alcance BIM.</em></h2>
-      <p class="nota reveal">Mueve la duración de la obra, cambia la modalidad y el presupuesto: los valores salen de la fórmula de la propuesta v03 (millones de COP).</p>
-      <div class="inv-sim reveal"><div class="sim">
-          <div class="sim-ctrl">
-            <div class="seg" id="segModo"><button data-m="ind" class="on">Independiente</button><button data-m="int">BIM + construcción</button></div>
-            <label class="rango"><span>Duración de la obra</span><input type="range" id="rMeses" min="6" max="9" step="1" value="8" /><b id="vMeses">8 meses</b></label>
-            <label class="rango"><span>Presupuesto de obra</span><input type="range" id="rObra" min="5000" max="60000" step="500" value="25000" /><b id="vObra">$25.000 M</b></label>
-          </div>
-          <div class="sim-res">
-            <div><small>Honorarios sin IVA</small><b id="oTotal">—</b></div>
-            <div><small>Con IVA (19 %)</small><b id="oIva">—</b></div>
-            <div><small>Punto de equilibrio</small><b id="oEq">—</b><small>del presupuesto de obra</small></div>
-          </div>
+  <!-- 06 OBRA REAL PISO 2 -->
+  <section class="esc izq ancho" data-escena="obra">
+    <div class="txt">
+      <p class="k" data-a="up">06 · Ya en obra · Piso 2</p>
+      <h2 data-a="words"><b>12</b> habitaciones, <b>3</b> frentes, un solo modelo</h2>
+      <p class="lead" data-a="up">Programación de obra de las habitaciones 214 a 225: inicio real el 01-sep-2026 y entrega conjunta del piso el 02-nov-2026, con control de redes antes de enchapes.</p>
+      <div class="frentes" id="frentes"></div>
+    </div>
+    <div class="glass linea" data-a="fly">
+      <div class="eje" id="hitos"></div>
+    </div>
+  </section>
+
+  <!-- 07 INTERIOR (3ds Max) -->
+  <section class="esc izq ancho" data-escena="interior">
+    <div class="txt">
+      <p class="k" data-a="up">07 · Hasta el último detalle</p>
+      <h2 data-a="words">Habitación 216, <b>modelada pieza a pieza</b></h2>
+      <p class="lead" data-a="up">Del federado a la habitación: muebles, baño, luminarias y materiales reales. Arrastra para girarla.</p>
+      <div class="renders">
+        <figure class="glass" data-a="fly"><img src="./img/render_216_actualizado.webp" alt="Render habitación 216" loading="lazy" /><figcaption>Hab. 216 · render</figcaption></figure>
+        <figure class="glass" data-a="fly"><img src="./img/render_bano_217_test01.webp" alt="Render baño" loading="lazy" /><figcaption>Baño · render</figcaption></figure>
+      </div>
+    </div>
+    <div class="glass hab-frame" data-a="tilt">
+      <canvas id="hab"></canvas>
+      <div class="hab-carga" id="habCarga"><span></span>Cargando habitación 216 · 3ds Max</div>
+      <div class="hab-tags" data-a="stagger"><span class="chip">LOD 400</span><span class="chip">Baño incluido</span><span class="chip">Texturas reales</span></div>
+    </div>
+  </section>
+
+  <!-- 08 PLANOS ARQUITECTÓNICOS (carrusel) -->
+  <section class="esc centro planos" data-escena="planos">
+    <div class="txt">
+      <p class="k" data-a="up">08 · Planos arquitectónicos · Piso 2</p>
+      <h2 data-a="words">Cada habitación, <b>documentada</b></h2>
+      <p class="lead" data-a="up">Plantas, amoblamiento, pisos y enchapes, cielos, secciones y vistas 3D de las habitaciones 214 a 225. Toca una lámina para verla en grande.</p>
+    </div>
+    <div class="carrusel">
+      <button class="flecha" id="cPrev" aria-label="Anterior">‹</button>
+      <div class="pista" id="pista"></div>
+      <button class="flecha der" id="cNext" aria-label="Siguiente">›</button>
+    </div>
+    <div class="glass info-lamina" id="infoLamina" data-a="pop"></div>
+    <div class="habs-carrusel" id="habsCarrusel" data-a="stagger"></div>
+  </section>
+
+  <!-- 09 ACTORES -->
+  <section class="esc centro" data-escena="actores">
+    <div class="txt">
+      <p class="k" data-a="up">09 · Matriz de responsabilidades</p>
+      <h2 data-a="words">Cada quien <b>su modelo.</b> BACO, la gestión.</h2>
+      <p class="lead" data-a="up">Toca un actor para ver su responsabilidad contractual.</p>
+    </div>
+    <div class="actores" data-a="pills">
+      <button class="glass actor" data-r="Levantamiento 3D y entrega del modelo de condiciones existentes LOD 300 y soportes acordados.">Proveedor de escaneo</button>
+      <button class="glass actor" data-r="Desarrollar, revisar y aprobar técnicamente sus modelos por especialidad, en LOD 400 según matriz pactada.">Diseñadores / especialistas</button>
+      <button class="glass actor oro" data-r="Establecer requisitos, administrar BEP/CDE, coordinar, verificar entregas e integrar el cierre digital.">BACO STUDIO</button>
+      <button class="glass actor" data-r="Mantener modelos de fabricación/instalación, documentar cambios y suministrar as-built y datos de equipos.">Contratistas / fabricantes</button>
+      <button class="glass actor" data-r="Contratar a responsables, tomar decisiones de aprobación, exigir cumplimiento y recibir los entregables.">Propietario / gerencia</button>
+      <span class="chip s">ISO 19650-1 · 19650-2</span><span class="chip s">BIMForum LOD 2025</span><span class="chip s">IFC</span><span class="chip s">BEP</span><span class="chip s">EIR / AIR</span><span class="chip s">CDE</span>
+    </div>
+    <div class="glass resp" id="resp" data-a="fly"><small>Responsabilidad</small><p>Establecer requisitos, administrar BEP/CDE, coordinar, verificar entregas e integrar el cierre digital.</p></div>
+  </section>
+
+  <!-- 09 HONORARIOS -->
+  <section class="esc izq ancho" data-escena="honorarios">
+    <div class="txt">
+      <p class="k" data-a="up">10 · Oferta económica</p>
+      <h2 data-a="words">Honorarios <b>por etapas</b></h2>
+      <div class="seg" id="segModo" data-a="pop"><button data-m="solo" class="on">Solo BIM</button><button data-m="int">BIM + construcción</button></div>
+      <label class="rango" data-a="up">Duración de la obra <b id="vMeses">8 meses</b><input id="rMeses" type="range" min="6" max="9" step="1" value="8" /></label>
+      <div class="glass total" data-a="fly">
+        <small>Total honorarios sin IVA</small><b id="oTotal">$0</b>
+        <p>Con IVA (19%): <strong id="oIva">$0</strong></p>
+      </div>
+      <p class="nota" data-a="up">Etapas A, B y D fijas: $111.000.000. Cada mes de obra: $23.000.000, o $13.800.000 con el descuento del 40% por sinergia (solo Etapa C).</p>
+    </div>
+    <div class="glass grafico" data-a="tilt">
+      <div class="barras" id="barras"></div>
+      <svg id="curva" viewBox="0 0 600 260" preserveAspectRatio="none"></svg>
+      <p class="mini">Honorarios acumulados por mes (COP, sin IVA)</p>
+    </div>
+  </section>
+
+  <!-- 10 GEMELO -->
+  <section class="esc izq" data-escena="gemelo">
+    <div class="txt">
+      <p class="k" data-a="up">11 · Cierre digital</p>
+      <h2 data-a="words">Un gemelo listo para <b>operar</b></h2>
+      <div class="glass leyendo" data-a="fly">
+        <p class="mini">✦ Consolidando modelo federado as-built…</p>
+        <b class="pct" data-n="100" data-suf="%">0</b>
+        <div class="barra"><i></i></div>
+        <div class="checks">
+          <span>Fichas técnicas</span><span>Manuales</span><span>Garantías</span><span>Fabricante y serie</span><span>Ubicación</span><span>Fecha de instalación</span><span>Mantenimiento</span>
         </div>
-        <p class="fuente">Fórmula de la propuesta v03: etapas A, B y D fijas $111 M + $23 M por mes de obra (o $13,8 M con equipo de construcción BACO). Punto de equilibrio = honorario / presupuesto. No es una proyección de ahorro.</p></div>
-    </div>
-  </section>
-
-  <!-- IV · PRÓXIMOS PASOS -->
-  <section class="sec" id="pasos">
-    <div class="sec-in">
-      <p class="kicker">Próximos pasos</p>
-      <h2>Activar la contratación <em>en cinco decisiones</em></h2>
-      <div class="pasos">
-        <div id="pLinea" class="p-linea"></div>
-        <button class="paso"><b>01</b><strong>Confirmar roles</strong><span>Propietario, gerencia, diseñadores y responsables de aprobación.</span></button>
-        <button class="paso"><b>02</b><strong>Alinear el escaneo</strong><span>Alcance y entregables LOD 300 del proveedor externo.</span></button>
-        <button class="paso"><b>03</b><strong>Definir especialidades</strong><span>Hasta seis paquetes y matriz LOD 400.</span></button>
-        <button class="paso"><b>04</b><strong>Aprobar hitos</strong><span>Cronograma, licitaciones, revisiones y criterios AIR.</span></button>
-        <button class="paso"><b>05</b><strong>Formalizar</strong><span>Elegir modalidad y acordar honorarios y condiciones.</span></button>
       </div>
+      <p class="nota" data-a="up">Modelo informacional del activo. No incluye integración viva con sensores, BMS, IoT ni CMMS/CAFM.</p>
     </div>
   </section>
 
-  <!-- CIERRE -->
-  <section class="sec azul cierre" id="cierre">
-    <div class="sec-in">
-      <h2>Una obra coordinada. <em>Un activo preparado para el futuro.</em></h2>
-      <p class="lema reveal">Construir con certeza · Gestionar con inteligencia · Conservar el conocimiento.</p>
-      <div class="cta reveal"><button class="pill" data-arriba>Volver al recorrido 3D <span>↑</span></button><button class="pill hueca" data-explorar>Explorar el modelo <span>↗</span></button></div>
-      <div class="logos-cierre reveal"><img src="./logos/estelar.png" alt="Estelar" /><i></i><img src="./logos/baco.png" alt="Baco Studio" /></div>
-      <p class="mini pie">Propuesta conceptual · BACO Studio para Estelar La Fontana · Modelos: HLF_P2-P6.rvt y 1001_Hotel_la_fotona_redes.rvt</p>
+  <!-- 11 CIERRE -->
+  <section class="esc centro cierre" data-escena="cierre">
+    <div class="txt">
+      <img class="logo-cierre" src="./logos/baco.png" alt="BACO Studio" data-a="up" />
+      <h2 data-a="words">Construir antes de <b>construir</b></h2>
+      <p class="lead" data-a="up">Valor comercial base: $295.000.000 + IVA. Valor integrado condicionado: $221.400.000 + IVA.</p>
+      <div class="ctas" data-a="stagger">
+        <button class="btn oro" data-explorar>Explorar el modelo 3D</button>
+        <a class="btn" href="https://alejagoguti-cpu.github.io/BACO-OBRA/" target="_blank" rel="noopener">Abrir BACO Obra</a>
+      </div>
+      <p class="pie">Propuesta de BACO Studio S.A.S. · 9 de noviembre de 2026 · No es un sitio oficial de Hoteles Estelar.<br/>Modelos: HLF_P2-P6.rvt · 1001_Hotel_la_fotona_redes.rvt · Hab. 216 (3ds Max)</p>
     </div>
   </section>
 </main>
 
-<!-- MODO B: exploración libre -->
-<aside id="panel">
-  <h3>Niveles</h3>
-  <ul id="listaNiveles"></ul>
-  <h3>Disciplinas</h3>
-  <ul id="listaDisc"></ul>
-  <h3>Categorías</h3>
-  <ul id="listaCats"></ul>
-  <h3>Vista</h3>
-  <div class="vistas">
-    <button data-v="arq" class="on">Arquitectura</button>
-    <button data-v="bim">Técnica</button>
-    <button data-v="plano">Planta</button>
-    <button data-v="explotar">Explotar</button>
-  </div>
-</aside>
 <div id="ficha"></div>
-<button id="volver" class="pill" hidden>← Volver al recorrido</button>
-<div id="cargando"><img src="./logos/estelar.png" alt="" /><span>Cargando modelo BIM</span><i></i></div>
-<p id="aviso">Propuesta conceptual · BACO Studio para Estelar La Fontana</p>
+<div id="lightbox"></div>
+<div id="cargando"><img src="./logos/baco.png" alt="" /><span>Cargando modelo BIM</span><i><b></b></i></div>
 <script type="module" src="./src/main.ts"></script>
 </body>
 </html>
